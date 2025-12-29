@@ -5,6 +5,9 @@ Convert raw magnetometer CSV → em_modulated.csv format.
 Handles various CSV formats and computes "power" metric from magnetic field magnitude.
 """
 import argparse
+import sys
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 
@@ -126,7 +129,5 @@ def main():
 
 
 if __name__ == "__main__":
-    import sys
-    from pathlib import Path
     sys.exit(main())
 
