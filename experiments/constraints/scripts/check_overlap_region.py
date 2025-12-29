@@ -18,6 +18,47 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
+def summarize_island(mask, grids: dict, out_json: str | None = None):
+    """
+    Extract bounding box and percentiles for viable parameter region.
+    
+    Args:
+        mask: boolean array of viable points
+        grids: dict of named grids (same shape as mask), e.g.
+               {"lambda_m": lambda_grid, "alpha": alpha_grid, "m_phi_gev": mphi_grid, ...}
+        out_json: optional path to save JSON summary
+    """
+    idx = np.where(mask)
+    n = int(mask.sum())
+    if n == 0:
+        print("❌ Overlap/viable region is EMPTY.")
+        return None
+
+    summary = {"n_viable_points": n}
+    for name, grid in grids.items():
+        vals = np.asarray(grid)[idx]
+        summary[name] = {
+            "min": float(np.min(vals)),
+            "max": float(np.max(vals)),
+            "p50": float(np.percentile(vals, 50)),
+            "p05": float(np.percentile(vals, 5)),
+            "p95": float(np.percentile(vals, 95)),
+        }
+
+    print("\n✅ VIABLE ISLAND SUMMARY (bounds)")
+    print(f"Viable points: {n}")
+    for name, stats in summary.items():
+        if name == "n_viable_points":
+            continue
+        print(f"- {name}: min={stats['min']:.3e}, max={stats['max']:.3e} (p05={stats['p05']:.3e}, p50={stats['p50']:.3e}, p95={stats['p95']:.3e})")
+
+    if out_json:
+        Path(out_json).parent.mkdir(parents=True, exist_ok=True)
+        Path(out_json).write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        print(f"\n✓ Wrote: {out_json}")
+
+    return summary
+
 def load_qrng_bounds(qrng_json_path: Path) -> Optional[Dict]:
     """Load QRNG constraint bounds."""
     if not qrng_json_path.exists():
@@ -49,7 +90,8 @@ def load_higgs_bounds(higgs_json_path: Path) -> Optional[Dict]:
 
 def compute_viable_region(qrng_bounds: Optional[Dict],
                         ff_bounds: Optional[Dict],
-                        higgs_bounds: Optional[Dict]) -> Dict:
+                        higgs_bounds: Optional[Dict],
+                        output_dir: Optional[Path] = None) -> Dict:
     """
     Compute viable parameter space.
     
@@ -104,13 +146,17 @@ def compute_viable_region(qrng_bounds: Optional[Dict],
         viable_mask = ALPHA_GRID < ff_alpha_max
         
         # Summarize the island
+        island_json_path = None
+        if output_dir:
+            island_json_path = str(output_dir / "overlap_island_summary.json")
+        
         island_summary = summarize_island(
             mask=viable_mask,
             grids={
                 "lambda_m": LAMBDA_GRID,
                 "alpha": ALPHA_GRID,
             },
-            out_json=str(output_path.parent / "overlap_island_summary.json")
+            out_json=island_json_path
         )
         
         # Add QRNG bounds to summary
@@ -188,7 +234,7 @@ def main():
     ff_bounds = load_fifth_force_bounds(ff_path)
     higgs_bounds = load_higgs_bounds(higgs_path)
     
-    summary = compute_viable_region(qrng_bounds, ff_bounds, higgs_bounds)
+    summary = compute_viable_region(qrng_bounds, ff_bounds, higgs_bounds, output_dir=output_path.parent)
     
     # Save JSON summary
     json_path = output_path.with_suffix('.json')
