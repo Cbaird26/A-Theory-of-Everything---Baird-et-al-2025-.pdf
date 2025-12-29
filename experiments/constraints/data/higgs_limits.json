@@ -1,13 +1,14 @@
 {
-  "invisible_width_limit": 0.1,
-  "signal_strength_deviation": 0.05,
+  "invisible_width_limit_mev": 0.69,
+  "signal_strength_deviation": 0.13,
   "mass_range_gev": [
     1.0,
     1000.0
   ],
   "coupling_range": [
     1e-06,
-    0.01
+    1.0
   ],
-  "note": "Placeholder limits - replace with real LHC/HL-LHC bounds"
+  "source": "ATLAS H→invisible (VBF) BRinv<0.145 @95%CL (JHEP 08 (2022) 104) + ΓH^SM≈4.07 MeV (ATLAS materials); μ=1.023^{+0.056}_{-0.053} (ATLAS-CONF-2025-006).",
+  "note": "Invisible width derived assuming only new contribution is invisible partial width: Γ_inv < (BR_inv/(1-BR_inv)) × Γ_H^SM. Signal strength deviation is conservative 2σ cap from μ=1.023^{+0.056}_{-0.053}."
 }
