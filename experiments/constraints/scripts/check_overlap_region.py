@@ -91,7 +91,14 @@ def load_higgs_bounds(higgs_json_path: Path) -> Optional[Dict]:
 def compute_viable_region(qrng_bounds: Optional[Dict],
                         ff_bounds: Optional[Dict],
                         higgs_bounds: Optional[Dict],
-                        output_dir: Optional[Path] = None) -> Dict:
+                        output_dir: Optional[Path] = None,
+                        lambda_min: float = 1e-6,
+                        lambda_max: float = 1.0,
+                        alpha_min: float = 1e-12,
+                        alpha_max: float = 1e-3,
+                        n_lambda: int = 250,
+                        n_alpha: int = 250,
+                        out_json: str = "experiments/constraints/results/overlap_island_summary.json") -> Dict:
     """
     Compute viable parameter space.
     
@@ -134,11 +141,18 @@ def compute_viable_region(qrng_bounds: Optional[Dict],
         qrng_eps_upper = qrng_bounds.get('epsilon_upper_95') if qrng_bounds else None
         qrng_eps_lower = qrng_bounds.get('epsilon_lower_95') if qrng_bounds else None
         
-        # Create a simple parameter grid for island summary
-        # This is a placeholder - real implementation would scan actual parameter space
-        # For now, we'll create a dummy grid to show the structure
-        lambda_range = np.logspace(-6, 0, 50)  # 1e-6 to 1 m
-        alpha_range = np.logspace(-12, -3, 50)  # 1e-12 to 1e-3
+        # Create parameter grid for island summary
+        # Use provided grid bounds and resolution
+        lambda_range = np.logspace(
+            np.log10(lambda_min),
+            np.log10(lambda_max),
+            n_lambda
+        )
+        alpha_range = np.logspace(
+            np.log10(alpha_min),
+            np.log10(alpha_max),
+            n_alpha
+        )
         LAMBDA_GRID, ALPHA_GRID = np.meshgrid(lambda_range, alpha_range)
         
         # Simple viable mask: points below fifth-force exclusion
@@ -149,6 +163,10 @@ def compute_viable_region(qrng_bounds: Optional[Dict],
         island_json_path = None
         if output_dir:
             island_json_path = str(output_dir / "overlap_island_summary.json")
+        
+        island_json_path = None
+        if output_dir:
+            island_json_path = str(output_dir / Path(out_json).name)
         
         island_summary = summarize_island(
             mask=viable_mask,
@@ -222,6 +240,22 @@ def main():
     ap.add_argument('--out', type=str,
                    default='experiments/constraints/results/overlap_region_summary.png',
                    help='Output PNG path')
+    # Grid refinement arguments
+    ap.add_argument('--lambda-min', type=float, default=1e-6,
+                   help='Minimum lambda (range) in meters')
+    ap.add_argument('--lambda-max', type=float, default=1.0,
+                   help='Maximum lambda (range) in meters')
+    ap.add_argument('--alpha-min', type=float, default=1e-12,
+                   help='Minimum alpha (Yukawa strength)')
+    ap.add_argument('--alpha-max', type=float, default=1e-3,
+                   help='Maximum alpha (Yukawa strength)')
+    ap.add_argument('--n-lambda', type=int, default=250,
+                   help='Number of grid points in lambda direction')
+    ap.add_argument('--n-alpha', type=int, default=250,
+                   help='Number of grid points in alpha direction')
+    ap.add_argument('--out-json', type=str,
+                   default='experiments/constraints/results/overlap_island_summary.json',
+                   help='Output JSON path for island summary')
     args = ap.parse_args()
     
     qrng_path = Path(args.qrng_json)
@@ -234,7 +268,17 @@ def main():
     ff_bounds = load_fifth_force_bounds(ff_path)
     higgs_bounds = load_higgs_bounds(higgs_path)
     
-    summary = compute_viable_region(qrng_bounds, ff_bounds, higgs_bounds, output_dir=output_path.parent)
+    summary = compute_viable_region(
+        qrng_bounds, ff_bounds, higgs_bounds,
+        output_dir=output_path.parent,
+        lambda_min=args.lambda_min,
+        lambda_max=args.lambda_max,
+        alpha_min=args.alpha_min,
+        alpha_max=args.alpha_max,
+        n_lambda=args.n_lambda,
+        n_alpha=args.n_alpha,
+        out_json=args.out_json
+    )
     
     # Save JSON summary
     json_path = output_path.with_suffix('.json')
