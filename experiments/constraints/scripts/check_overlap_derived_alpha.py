@@ -14,6 +14,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import sys
+from pathlib import Path
+# Add scripts directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
 from derive_alpha_from_portal import map_parameters_to_yukawa
 from active_constraint_labeling import (
     label_constraints_for_grid,
@@ -48,6 +52,8 @@ def compute_viable_region_derived_alpha(
     higgs_bounds: Optional[Dict],
     envelope_data: Optional[pd.DataFrame],
     model: str = 'simple',
+    rho: float = 0.0,
+    screening: bool = False,
     output_dir: Optional[Path] = None
 ) -> Dict:
     """
@@ -75,13 +81,27 @@ def compute_viable_region_derived_alpha(
     LAMBDA_GRID = np.zeros_like(M_PHI_GRID)
     ALPHA_GRID = np.zeros_like(M_PHI_GRID)
     
+    # Get screening parameters from args if available
+    rho = getattr(args, 'rho', 0.0) if 'args' in locals() else 0.0
+    screening = getattr(args, 'screening', False) if 'args' in locals() else False
+    
     for i in range(n_theta):
         for j in range(n_m_phi):
             m_phi = M_PHI_GRID[i, j]
             theta = THETA_GRID[i, j]
-            lambda_m, alpha = map_parameters_to_yukawa(m_phi, theta, model=model)
-            LAMBDA_GRID[i, j] = lambda_m
-            ALPHA_GRID[i, j] = alpha
+            try:
+                lambda_m, alpha = map_parameters_to_yukawa(
+                    m_phi, theta, 
+                    rho=rho,
+                    model=model,
+                    screening=screening
+                )
+                LAMBDA_GRID[i, j] = lambda_m
+                ALPHA_GRID[i, j] = alpha
+            except Exception as e:
+                # Handle edge cases (e.g., very small theta causing issues)
+                LAMBDA_GRID[i, j] = np.nan
+                ALPHA_GRID[i, j] = np.nan
     
     # Get constraint bounds
     alpha_max_allowed = None
@@ -242,8 +262,12 @@ def main():
     ap.add_argument('--n-theta', type=int, default=200,
                    help='Number of angle points')
     ap.add_argument('--model', type=str, default='simple',
-                   choices=['simple', 'scale_breaking', 'portal'],
+                   choices=['simple', 'normalized', 'screened', 'scale_breaking', 'portal'],
                    help='Model type')
+    ap.add_argument('--rho', type=float, default=0.0,
+                   help='Matter density (kg/m³) for screening')
+    ap.add_argument('--screening', action='store_true',
+                   help='Enable screening suppression')
     ap.add_argument('--qrng-json', type=str,
                    default='experiments/grok_qrng/results/lfdr_withinrun/global_summary.json',
                    help='QRNG bounds JSON')
@@ -280,6 +304,8 @@ def main():
         qrng_bounds, ff_bounds, higgs_bounds,
         envelope_data,
         model=args.model,
+        rho=args.rho,
+        screening=args.screening,
         output_dir=Path(args.out_dir)
     )
     

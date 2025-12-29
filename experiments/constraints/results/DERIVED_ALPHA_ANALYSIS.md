@@ -26,23 +26,35 @@ Each point is labeled with the constraint that has the smallest slack (is tighte
 
 ## Results
 
-### Island Coordinates (Derived α)
+### Island Coordinates (Derived α - Simple Model)
 
 | Parameter | p05 | p50 | p95 |
 |-----------|-----|-----|-----|
-| λ (m) | [TBD] | [TBD] | [TBD] |
-| α | [TBD] | [TBD] | [TBD] |
-| m_φ (GeV) | [TBD] | [TBD] | [TBD] |
-| θ | [TBD] | [TBD] | [TBD] |
+| λ (m) | 3.94e-13 | 1.97e-10 | 9.89e-08 |
+| α | 1.78e-12 | 3.65e-10 | 7.49e-08 |
+| m_φ (GeV) | 2.0e-06 | 1.0e-03 | 0.50 |
+| θ | 1.3e-06 | 1.9e-05 | 2.7e-04 |
 
-### Constraint Dominance
+**Note:** λ range (3.94e-13 to 9.89e-08 m) corresponds to 0.39 pm to 98.9 nm, not "sub-nm to 100 nm" as initially stated. The sub-nm claim was a misstatement - actual range is sub-pm to ~100 nm.
+
+### Constraint Dominance (Simple Model)
 
 | Constraint | Percentage | Interpretation |
 |------------|------------|----------------|
-| ATLAS μ | [TBD]% | Collider-limited |
-| Higgs inv | [TBD]% | Collider-limited |
-| Fifth-force | [TBD]% | Gravity-limited |
-| QRNG tilt | [TBD]% | Tilt-limited |
+| ATLAS μ | 0.0% | Not limiting |
+| Higgs inv | 0.0% | Not limiting |
+| Fifth-force | 100.0% | **Gravity-limited** |
+| QRNG tilt | 0.0% | Not limiting |
+
+**Key Insight:** 100% fifth-force limited means collider and QRNG constraints are easily satisfied, but the fifth-force envelope is the active bottleneck.
+
+### Normalized Model Results
+
+With proper normalization (α = (sin θ / v)² * (m_Pl)²), the island coordinates will shift. This is expected as the normalization includes huge factors (m_Pl / v ~ 10^15).
+
+### Screening Effects
+
+With screening enabled, the effective α is suppressed around macroscopic objects, potentially allowing larger θ values without violating bounds. This could expand the viable parameter space.
 
 ## Interpretation
 
