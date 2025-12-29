@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.stats import spearmanr
 
 
 def validate_curve(csv_path: Path, expected_lambda_range: tuple = (1e-7, 1e-5), source_name: str = "Unknown"):
@@ -64,21 +65,41 @@ def validate_curve(csv_path: Path, expected_lambda_range: tuple = (1e-7, 1e-5), 
     if alpha_min < 0:
         issues.append(f"Negative alpha values found (min: {alpha_min:.2e})")
     
-    if alpha_max > 1.0:
-        issues.append(f"Alpha values seem too large (max: {alpha_max:.2e}, expected < 1.0)")
+    # For exclusion curves, alpha can be very large at small lambda (10^9-10^12 is normal)
+    # Only flag if absurdly large (likely unit error)
+    if alpha_max > 1e18:
+        issues.append(f"Alpha values seem absurdly large (max: {alpha_max:.2e}, possible unit error)")
     
     if alpha_max < 1e-15:
         issues.append(f"Alpha values seem too small (max: {alpha_max:.2e}, might be axis flip)")
     
-    # Check monotonicity (exclusion curve should generally increase with lambda)
+    # Check monotonicity (exclusion curves should DECREASE with lambda)
     # Sort by lambda
     df_sorted = df.sort_values('lambda')
+    lambda_sorted = pd.to_numeric(df_sorted['lambda'], errors='coerce')
     alpha_sorted = pd.to_numeric(df_sorted['alpha'], errors='coerce')
     
-    # Check if mostly increasing (allow some noise)
-    increasing_fraction = (np.diff(alpha_sorted.dropna()) > 0).mean()
-    if increasing_fraction < 0.3:
-        issues.append(f"Alpha doesn't appear monotone-increasing with lambda (only {increasing_fraction:.1%} of steps are increasing). Possible axis flip?")
+    # Remove NaN values for correlation check
+    valid_mask = lambda_sorted.notna() & alpha_sorted.notna()
+    if valid_mask.sum() < 3:
+        issues.append("Not enough valid data points for trend analysis")
+    else:
+        log_lambda = np.log10(lambda_sorted[valid_mask].values)
+        log_alpha = np.log10(alpha_sorted[valid_mask].values)
+        
+        # Use Spearman correlation to check for decreasing trend
+        rho, p_value = spearmanr(log_lambda, log_alpha)
+        
+        # For exclusion curves, expect negative correlation (alpha decreases as lambda increases)
+        if rho > -0.3:
+            issues.append(f"Curve not strongly decreasing (Spearman rho={rho:.2f}). Expected negative correlation for exclusion curves. Check digitization/axes.")
+        else:
+            print(f"✓ Decreasing exclusion curve behavior OK (Spearman rho={rho:.2f})")
+        
+        # Also check simple decreasing fraction
+        decreasing_fraction = (np.diff(alpha_sorted[valid_mask].values) < 0).mean()
+        if decreasing_fraction < 0.5:
+            issues.append(f"Alpha doesn't appear monotone-decreasing with lambda (only {decreasing_fraction:.1%} of steps are decreasing). Possible axis flip?")
     
     # Check excluded column if present
     if 'excluded' in df.columns:
