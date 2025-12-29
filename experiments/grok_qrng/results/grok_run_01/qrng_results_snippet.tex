@@ -1,0 +1,13 @@
+% Auto-generated from global_summary.json
+% Run: python generate_latex_snippet.py --json global_summary.json --out qrng_results_snippet.tex
+
+\paragraph{QRNG pilot constraint.}
+We analyzed $n=200000$ QRNG bits using a Beta--Binomial Bayesian model
+comparing the fair-coin null ($p=1/2$) to a symmetric Beta prior alternative.
+The maximum-likelihood bias estimate was $\hat{\epsilon}=\hat{p}-1/2 = -5.500000\times 10^{-04}$,
+where $\hat{p}=0.499450$ is the observed proportion of ones. The 95\% credible interval for $\epsilon$ is $[-0.002741, 0.001641]$.
+The Bayes factor was $\mathrm{BF}_{10}=0.00$ ($\log \mathrm{BF}_{10}=-5.756$),
+indicating evidence against bias relative to the fair-coin null.
+These results constrain the effective ethical-bias strength $\eta$ in the small-bias regime,
+with null-consistent outcomes mapping to upper bounds on $|\eta|$ under the operational link
+$\epsilon \propto \eta(\Delta E - \langle \Delta E\rangle)$.

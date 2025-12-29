@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+
+# Results (keep structure, ignore large outputs)
+results/*.png
+results/*.csv
+results/*.json
+!results/.gitkeep
+
+# Data (keep structure, ignore raw data)
+data/raw/*
+!data/raw/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
