@@ -2,7 +2,67 @@
 
 This directory contains the preregistration, analysis scripts, and data collection protocols for testing protocol-linked EM modulation as predicted by the MQGT-SCF framework.
 
-## Quick Start
+## 🚀 Quick Start: Phone Magnetometer Test (30 minutes)
+
+**Goal:** Record magnetometer data, convert to analysis format, run analysis.
+
+### Step 1: Record Magnetometer Data
+
+**Setup:**
+- Phone in **airplane mode**
+- Place on stable surface (don't touch it)
+- Keep away from chargers, speakers, laptops, big metal objects
+- Use any sensor logger app that exports CSV with:
+  - `mx, my, mz` (magnetic field components, usually in µT)
+  - `t` or `time` or `timestamp` (optional, can use `--sample-hz` instead)
+
+**Protocol:**
+- Record for **30 minutes**
+- **60s neutral / 60s coherence** alternating (use external timer)
+- Export CSV to your computer
+
+**Recommended apps:**
+- **iOS:** SensorLog, Physics Toolbox Suite
+- **Android:** Sensor Logger, Physics Toolbox Suite
+
+### Step 2: Convert Raw CSV → Analysis Format
+
+```bash
+# If CSV has timestamps:
+python prep_magnetometer_csv.py --in /path/to/raw_mag.csv --out data/raw/em_modulated.csv --block-sec 60 --start 0
+
+# If CSV has no timestamps (provide sample rate):
+python prep_magnetometer_csv.py --in /path/to/raw_mag.csv --out data/raw/em_modulated.csv --sample-hz 10 --block-sec 60 --start 0
+```
+
+This will:
+- Extract `mx, my, mz` columns (handles various naming conventions)
+- Compute magnetic field magnitude: `|B| = sqrt(mx² + my² + mz²)`
+- Bin into 1-second windows
+- Compute "power" as within-second standard deviation of `|B|`
+- Add protocol label `s(t)` (0=neutral, 1=coherence) based on alternating blocks
+
+### Step 3: Analyze
+
+```bash
+python analyze_em.py --data data/raw/em_modulated.csv --out-dir results/em_run1
+```
+
+This will:
+- Fit modulation model: `Power(t) = α + β*s(t) + drift(t) + noise`
+- Run permutation test (1000 shuffles)
+- Test block-size stability
+- Generate plots and JSON summary
+
+### Step 4: Generate LaTeX Snippet
+
+```bash
+python generate_em_snippet.py --json results/em_run1/em_modulation_summary.json --out em_modulation_snippet.tex
+```
+
+---
+
+## Full Workflow (All Hardware Options)
 
 ### 1. Preregister Your Protocol
 
@@ -26,12 +86,6 @@ Save as CSV with columns: `t`, `power` (or `magnitude`/`amplitude`), `s`, `block
 ```bash
 python analyze_em.py --data data/raw/em_modulated.csv --out-dir results/em_run1
 ```
-
-This will:
-- Fit modulation model: `Power(t) = α + β*s(t) + drift(t) + noise`
-- Run permutation test
-- Test block-size stability
-- Generate plots and JSON summary
 
 ### 4. Generate LaTeX Snippet
 
@@ -107,24 +161,29 @@ The analysis script (`analyze_em.py`) performs:
 ## Files
 
 - `prereg_em_noise_tier1.md` - Preregistration document
+- `prep_magnetometer_csv.py` - Convert raw magnetometer CSV → analysis format
 - `analyze_em.py` - Analysis script
 - `generate_em_snippet.py` - LaTeX snippet generator
 - `README.md` - This file
 
-## Example Workflow
+## Example Workflow (Magnetometer)
 
 ```bash
-# 1. Collect data (save as CSV)
-# ... run protocol, record data ...
+# 1. Record magnetometer data (30 min, alternating protocol)
+# ... use sensor app, export CSV ...
 
-# 2. Analyze
+# 2. Convert to analysis format
+python prep_magnetometer_csv.py --in raw_magnetometer.csv --out data/raw/em_modulated.csv --block-sec 60 --start 0
+
+# 3. Analyze
 python analyze_em.py --data data/raw/em_modulated.csv --out-dir results/em_run1
 
-# 3. Generate LaTeX snippet
+# 4. Generate LaTeX snippet
 python generate_em_snippet.py --json results/em_run1/em_modulation_summary.json
 
-# 4. Check results
+# 5. Check results
 cat results/em_run1/em_modulation_summary.json
+ls results/em_run1/em_modulation_plot.png
 ```
 
 ## Notes
