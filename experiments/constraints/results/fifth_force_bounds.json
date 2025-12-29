@@ -1,7 +1,7 @@
 {
-  "lambda_min": 4e-07,
+  "lambda_min": 4.0000000000000014e-08,
   "lambda_max": 1.0,
   "alpha_max_allowed": 1.232846739442066e-06,
-  "exclusion_points": 1266,
-  "source": "envelope (Kapner + Sushkov2011 + Geraci2008)"
+  "exclusion_points": 2650,
+  "source": "envelope (Kapner + Sushkov2011 + Geraci2008 + Decca2005 + ChenDecca2016)"
 }
