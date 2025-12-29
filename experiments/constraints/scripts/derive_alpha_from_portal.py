@@ -10,10 +10,10 @@ import numpy as np
 from typing import Tuple, Optional
 
 
-# Physical constants
-HBAR_C = 197.3e-15  # ħc in GeV·m (for conversion)
+# Physical constants (CODATA 2018)
+HBAR_C_GeV_m = 1.973269804e-16  # ħc in GeV·m (CODATA 2018)
 M_H = 125.0  # Higgs mass in GeV
-M_PL = 2.435e18  # Planck mass in GeV
+M_PL = 1.22e19  # Reduced Planck mass in GeV
 V_H = 246.0  # Higgs vev in GeV
 M_N = 0.938  # Nucleon mass in GeV
 G_NEWTON = 6.674e-11  # Newton's constant in m³/(kg·s²)
@@ -21,7 +21,9 @@ G_NEWTON = 6.674e-11  # Newton's constant in m³/(kg·s²)
 
 def derive_lambda_from_mass(m_phi: float, units: str = 'gev') -> float:
     """
-    Derive Yukawa range λ from scalar mass m_φ.
+    Derive Yukawa range λ from scalar mass m_φ using CODATA ħc.
+    
+    λ = ħc / (m_φ c²) in natural units
     
     Args:
         m_phi: Scalar mass (in GeV if units='gev', or eV/keV/MeV)
@@ -42,10 +44,8 @@ def derive_lambda_from_mass(m_phi: float, units: str = 'gev') -> float:
     else:
         raise ValueError(f"Unknown units: {units}")
     
-    # λ = ħ/(m_φ c) in natural units
-    # In SI: λ = ħc / (m_φ c²)
-    # Using ħc ≈ 197.3 MeV·fm = 197.3e-15 GeV·m
-    lambda_m = HBAR_C / m_phi_gev
+    # λ = ħc / m_φ (CODATA value)
+    lambda_m = HBAR_C_GeV_m / m_phi_gev
     
     return lambda_m
 
@@ -67,69 +67,36 @@ def derive_alpha_simple(theta: float) -> float:
 
 
 def derive_alpha_normalized(theta: float, m_phi: float, 
-                            rho: float = 0.0, screening: bool = False) -> float:
+                            rho: float = 0.0, screening: bool = False,
+                            Theta: float = 1.0) -> float:
     """
     Properly normalized α derivation from Brax & Burrage (2021).
     
     Uses β_φ / m_Pl = sin θ / v (Eq. 26), and α = 2β² in standard Yukawa notation.
-    Includes screening suppression if enabled.
-    
-    For nucleons, the proper scaling is:
-    α ≈ (sin θ / v)² * (m_Pl / m_N)² ≈ (θ / v)² * (m_Pl / m_N)² for small θ
+    Screening applied multiplicatively: α_eff = α_unscreened * Θ² (Eq. 97-98).
     
     Args:
         theta: Mixing angle (dimensionless)
         m_phi: Scalar mass (in GeV)
         rho: Matter density (in kg/m³, for screening; default 0 = vacuum)
         screening: Whether to apply screening suppression
+        Theta: Screening factor (0 < Θ ≤ 1), applied as α_eff = Θ² * α_unscreened
     
     Returns:
         α (dimensionless Yukawa strength)
     """
-    # Brax & Burrage: β_φ / m_Pl = sin θ / v
-    # For small θ: sin θ ≈ θ
-    beta_over_mpl = np.sin(theta) / V_H
+    # Brax & Burrage Eq. 26: β_φ / m_Pl = sin θ / v
+    # So: β_φ = (m_Pl / v) sin θ
+    beta_phi = (M_PL / V_H) * np.sin(theta)
     
-    # Fifth-force strength: α = 2β² (in standard Yukawa notation)
-    # For nucleons: α ≈ (β_φ / m_Pl)² * (m_Pl / m_N)²
-    # This gives: α ≈ (sin θ / v)² * (m_Pl / m_N)²
-    # Using m_Pl ≈ 2.435e18 GeV, m_N ≈ 0.938 GeV
-    # So (m_Pl / m_N)² ≈ (2.435e18 / 0.938)² ≈ 6.75e36
-    # But this is still huge! Need to check literature more carefully.
-    # 
-    # Actually, the standard Yukawa α is defined relative to gravity:
-    # V(r) = -G m1 m2 / r (1 + α e^{-r/λ})
-    # So α is dimensionless and typically < 1 for weak forces.
-    # 
-    # For Higgs portal, the matter coupling comes from Higgs Yukawas:
-    # After mixing, scalar couples as: (sin θ / v) * m_f * φ f̄ f
-    # The fifth-force strength is: α ≈ (sin θ / v)² * (m_f / m_Pl)²
-    # For nucleons (m_f ≈ 1 GeV): α ≈ (θ / v)² * (1 / m_Pl)²
-    # This gives much smaller α!
+    # Standard Yukawa: α = 2 β² (Eq. 21 → Eq. 68 in linear regime)
+    alpha_unscreened = 2.0 * beta_phi**2
     
-    # More conservative: use (m_N / m_Pl)² factor (not m_Pl / m_N)
-    # This gives: α ≈ (sin θ / v)² * (m_N / m_Pl)²
-    # For small θ: α ≈ (θ / v)² * (m_N / m_Pl)²
-    alpha_unscreened = (beta_over_mpl * (M_N / M_PL))**2
-    
-    # Alternative: if literature says α ∝ θ² directly (simple portal),
-    # then normalized version might be: α = θ² * (m_N² / (v² m_Pl²))
-    # This is much smaller and more reasonable
-    # Let's use this more conservative form:
-    alpha_unscreened = (theta / V_H)**2 * (M_N / M_PL)**2
-    
-    # Screening: α_eff = α / (1 + ρ / ρ_crit)
-    # where ρ_crit ~ m_φ² / θ² (in appropriate units)
-    if screening and rho > 0:
-        # Critical density: ρ_crit ~ m_φ² / (θ² * normalization)
-        # In SI: ρ_crit ≈ m_phi² c² / (θ² ħ²) for screening
-        # Simplified: use approximate scaling
-        # For typical screening: ρ_crit ≈ 10^3 - 10^4 kg/m³ for micron-scale
-        rho_crit = (m_phi * 1e9)**2 / (theta**2 * 1e18)  # Rough scaling in kg/m³
-        if rho_crit > 0:
-            alpha = alpha_unscreened / (1.0 + rho / rho_crit)
-        else:
-            alpha = alpha_unscreened
+    # Screening: α_eff = Θ² * α_unscreened (Brax & Burrage Eq. 97-98)
+    # Θ is the screening factor (0 < Θ ≤ 1), computed from paper's expressions
+    # For now, allow user-set Theta; can compute from paper's formulas later
+    if screening:
+        alpha = (Theta**2) * alpha_unscreened
     else:
         alpha = alpha_unscreened
     
@@ -186,7 +153,8 @@ def map_parameters_to_yukawa(m_phi: float, theta: float,
                              mu: Optional[float] = None,
                              rho: float = 0.0,
                              model: str = 'simple',
-                             screening: bool = False) -> Tuple[float, float]:
+                             screening: bool = False,
+                             Theta: float = 1.0) -> Tuple[float, float]:
     """
     Map fundamental parameters to Yukawa (α, λ).
     
@@ -198,22 +166,21 @@ def map_parameters_to_yukawa(m_phi: float, theta: float,
         rho: Matter density (in kg/m³, for screening; default 0 = vacuum)
         model: 'simple', 'normalized', 'scale_breaking', 'portal', or 'screened'
         screening: Whether to apply screening (for 'normalized' or 'screened' models)
+        Theta: Screening factor (0 < Θ ≤ 1), applied as α_eff = Θ² * α_unscreened
     
     Returns:
         (lambda_m, alpha) where lambda_m is in meters, alpha is dimensionless
     """
-    # Derive λ from mass
-    # Unit check: λ = ħc / (m_φ c²) = ħc / m_φ (in natural units)
-    # Using ħc ≈ 197.3 MeV·fm = 197.3e-15 GeV·m
+    # Derive λ from mass using CODATA ħc
     lambda_m = derive_lambda_from_mass(m_phi, units='gev')
     
     # Derive α based on model
     if model == 'simple':
         alpha = derive_alpha_simple(theta)
     elif model == 'normalized':
-        alpha = derive_alpha_normalized(theta, m_phi, rho=rho, screening=screening)
+        alpha = derive_alpha_normalized(theta, m_phi, rho=rho, screening=screening, Theta=Theta)
     elif model == 'screened':
-        alpha = derive_alpha_normalized(theta, m_phi, rho=rho, screening=True)
+        alpha = derive_alpha_normalized(theta, m_phi, rho=rho, screening=True, Theta=Theta)
     elif model == 'scale_breaking':
         if mu is None:
             raise ValueError("mu required for scale_breaking model")
@@ -245,6 +212,8 @@ def main():
                    help='Matter density (kg/m³) for screening')
     ap.add_argument('--screening', action='store_true',
                    help='Enable screening suppression')
+    ap.add_argument('--Theta', type=float, default=1.0,
+                   help='Screening factor Θ (0 < Θ ≤ 1, default 1.0 = unscreened)')
     args = ap.parse_args()
     
     lambda_m, alpha = map_parameters_to_yukawa(
@@ -253,7 +222,8 @@ def main():
         mu=args.mu,
         rho=args.rho,
         model=args.model,
-        screening=args.screening
+        screening=args.screening,
+        Theta=args.Theta
     )
     
     print(f"Input parameters:")

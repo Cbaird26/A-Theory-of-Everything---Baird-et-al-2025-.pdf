@@ -54,6 +54,7 @@ def compute_viable_region_derived_alpha(
     model: str = 'simple',
     rho: float = 0.0,
     screening: bool = False,
+    Theta: float = 1.0,
     output_dir: Optional[Path] = None
 ) -> Dict:
     """
@@ -81,10 +82,6 @@ def compute_viable_region_derived_alpha(
     LAMBDA_GRID = np.zeros_like(M_PHI_GRID)
     ALPHA_GRID = np.zeros_like(M_PHI_GRID)
     
-    # Get screening parameters from args if available
-    rho = getattr(args, 'rho', 0.0) if 'args' in locals() else 0.0
-    screening = getattr(args, 'screening', False) if 'args' in locals() else False
-    
     for i in range(n_theta):
         for j in range(n_m_phi):
             m_phi = M_PHI_GRID[i, j]
@@ -94,7 +91,8 @@ def compute_viable_region_derived_alpha(
                     m_phi, theta, 
                     rho=rho,
                     model=model,
-                    screening=screening
+                    screening=screening,
+                    Theta=Theta
                 )
                 LAMBDA_GRID[i, j] = lambda_m
                 ALPHA_GRID[i, j] = alpha
@@ -268,6 +266,11 @@ def main():
                    help='Matter density (kg/m³) for screening')
     ap.add_argument('--screening', action='store_true',
                    help='Enable screening suppression')
+    ap.add_argument('--Theta', type=float, default=1.0,
+                   help='Screening factor Θ (0 < Θ ≤ 1, default 1.0 = unscreened)')
+    ap.add_argument('--lambda-regime', type=str, default='sub-nm',
+                   choices=['sub-nm', 'micron-to-meter'],
+                   help='λ regime: sub-nm (m_φ in MeV-GeV) or micron-to-meter (m_φ ultralight)')
     ap.add_argument('--qrng-json', type=str,
                    default='experiments/grok_qrng/results/lfdr_withinrun/global_summary.json',
                    help='QRNG bounds JSON')
@@ -285,6 +288,20 @@ def main():
                    help='Output directory')
     args = ap.parse_args()
     
+    # Adjust m_φ scan range based on λ regime if defaults are used
+    m_phi_min = args.m_phi_min
+    m_phi_max = args.m_phi_max
+    if args.lambda_regime == 'micron-to-meter':
+        # For λ ~ μm to meters, need ultralight m_φ
+        # λ = 1 μm → m_φ ≈ 2×10^-10 GeV ≈ 0.2 eV
+        # λ = 1 m → m_φ ≈ 2×10^-16 GeV ≈ 2×10^-7 eV
+        if args.m_phi_min == 1e-6:  # Using default
+            m_phi_min = 2e-16
+        if args.m_phi_max == 1.0:  # Using default
+            m_phi_max = 2e-10
+        print(f"Using micron-to-meter regime: m_φ = {m_phi_min:.3e} to {m_phi_max:.3e} GeV")
+    # else: sub-nm regime uses defaults (m_φ in MeV-GeV range)
+    
     # Load constraints
     qrng_bounds, ff_bounds, higgs_bounds = load_constraint_bounds(
         Path(args.qrng_json),
@@ -299,13 +316,14 @@ def main():
     
     # Compute viable region
     summary = compute_viable_region_derived_alpha(
-        args.m_phi_min, args.m_phi_max, args.n_m_phi,
+        m_phi_min, m_phi_max, args.n_m_phi,
         args.theta_min, args.theta_max, args.n_theta,
         qrng_bounds, ff_bounds, higgs_bounds,
         envelope_data,
         model=args.model,
         rho=args.rho,
         screening=args.screening,
+        Theta=args.Theta,
         output_dir=Path(args.out_dir)
     )
     
