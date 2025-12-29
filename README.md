@@ -1,12 +1,12 @@
 # MQGT-SCF — Merged Quantum Gauge and Scalar Consciousness Framework
 
 MQGT-SCF is a research framework that extends the Standard Model and General Relativity
-as an effective field theory incorporating scalar fields associated with consciousness
+as an EFT (effective field theory) incorporating scalar fields associated with consciousness
 (Φ_c) and ethical weighting (E).
 
 The framework is formulated conservatively, with explicit recovery of known physics
 in appropriate limits, and is designed to generate falsifiable, multi-channel
-experimental predictions.
+experimental predictions. The EFT scaffold reduces to baseline when couplings → 0.
 
 This repository is the canonical, actively maintained research corpus for the MQGT-SCF
 program, including formal theory, simulations, experimental proposals, and manuscripts.
