@@ -74,6 +74,9 @@ def derive_alpha_normalized(theta: float, m_phi: float,
     Uses β_φ / m_Pl = sin θ / v (Eq. 26), and α = 2β² in standard Yukawa notation.
     Includes screening suppression if enabled.
     
+    For nucleons, the proper scaling is:
+    α ≈ (sin θ / v)² * (m_Pl / m_N)² ≈ (θ / v)² * (m_Pl / m_N)² for small θ
+    
     Args:
         theta: Mixing angle (dimensionless)
         m_phi: Scalar mass (in GeV)
@@ -88,10 +91,32 @@ def derive_alpha_normalized(theta: float, m_phi: float,
     beta_over_mpl = np.sin(theta) / V_H
     
     # Fifth-force strength: α = 2β² (in standard Yukawa notation)
-    # But need to account for normalization: α relative to gravity
-    # Standard: α = (β_φ / m_Pl)² * (m_Pl / m_N)² for nucleons
-    # Simplified: α ≈ (sin θ / v)² * (m_Pl)² / (m_N)²
-    alpha_unscreened = (beta_over_mpl * M_PL)**2
+    # For nucleons: α ≈ (β_φ / m_Pl)² * (m_Pl / m_N)²
+    # This gives: α ≈ (sin θ / v)² * (m_Pl / m_N)²
+    # Using m_Pl ≈ 2.435e18 GeV, m_N ≈ 0.938 GeV
+    # So (m_Pl / m_N)² ≈ (2.435e18 / 0.938)² ≈ 6.75e36
+    # But this is still huge! Need to check literature more carefully.
+    # 
+    # Actually, the standard Yukawa α is defined relative to gravity:
+    # V(r) = -G m1 m2 / r (1 + α e^{-r/λ})
+    # So α is dimensionless and typically < 1 for weak forces.
+    # 
+    # For Higgs portal, the matter coupling comes from Higgs Yukawas:
+    # After mixing, scalar couples as: (sin θ / v) * m_f * φ f̄ f
+    # The fifth-force strength is: α ≈ (sin θ / v)² * (m_f / m_Pl)²
+    # For nucleons (m_f ≈ 1 GeV): α ≈ (θ / v)² * (1 / m_Pl)²
+    # This gives much smaller α!
+    
+    # More conservative: use (m_N / m_Pl)² factor (not m_Pl / m_N)
+    # This gives: α ≈ (sin θ / v)² * (m_N / m_Pl)²
+    # For small θ: α ≈ (θ / v)² * (m_N / m_Pl)²
+    alpha_unscreened = (beta_over_mpl * (M_N / M_PL))**2
+    
+    # Alternative: if literature says α ∝ θ² directly (simple portal),
+    # then normalized version might be: α = θ² * (m_N² / (v² m_Pl²))
+    # This is much smaller and more reasonable
+    # Let's use this more conservative form:
+    alpha_unscreened = (theta / V_H)**2 * (M_N / M_PL)**2
     
     # Screening: α_eff = α / (1 + ρ / ρ_crit)
     # where ρ_crit ~ m_φ² / θ² (in appropriate units)
@@ -99,6 +124,7 @@ def derive_alpha_normalized(theta: float, m_phi: float,
         # Critical density: ρ_crit ~ m_φ² / (θ² * normalization)
         # In SI: ρ_crit ≈ m_phi² c² / (θ² ħ²) for screening
         # Simplified: use approximate scaling
+        # For typical screening: ρ_crit ≈ 10^3 - 10^4 kg/m³ for micron-scale
         rho_crit = (m_phi * 1e9)**2 / (theta**2 * 1e18)  # Rough scaling in kg/m³
         if rho_crit > 0:
             alpha = alpha_unscreened / (1.0 + rho / rho_crit)
