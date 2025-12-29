@@ -1,0 +1,270 @@
+% ==========================================================
+% Response-to-comments / Close-out sections (drop-in appendix)
+% ==========================================================
+
+\section{Microphysical origin of the kernel $K$}
+\label{app:kernel}
+
+A common objection to nonlocal couplings is that the kernel $K$ is chosen \emph{ad hoc}.
+A standard EFT resolution is to realize $K$ as the Green's-function kernel obtained by
+integrating out a massive mediator field. This guarantees symmetry and decay properties and
+makes the coupling technically natural.
+
+\subsection{Local UV completion with a mediator field}
+Consider a local relativistic action (Minkowski signature) involving an auxiliary scalar mediator
+$M$ of mass $m_M>0$:
+\begin{align}
+S[\Phic,\Eth,M]
+= \int \dd^4x\;\Big[
+\Lag_{\Phic} + \Lag_{\Eth}
++ \tfrac12(\partial_\mu M)(\partial^\mu M) - \tfrac12 m_M^2 M^2
++ g\,M\,J(\Phic,\Eth)
+\Big],
+\end{align}
+where $g$ is a small coupling and $J(\Phic,\Eth)$ is a local source functional.
+A minimal choice for the nonlocal ethical-resonance channel is
+\begin{align}
+J(\Phic,\Eth) = \Eth
+\quad\text{or}\quad
+J(\Phic,\Eth)=\Eth\,\Phic.
+\end{align}
+
+The mediator appears quadratically and can be integrated out exactly at the path-integral level
+(Gaussian integration). Completing the square yields the effective nonlocal term
+\begin{align}
+S_{\mathrm{eff}}[\Phic,\Eth] \supset
+\frac{g^2}{2}\int \dd^4x\,\dd^4x'\; J(x)\,G_F(x-x')\,J(x'),
+\end{align}
+where $G_F$ is the propagator (Green's function) of the Klein--Gordon operator $(\Box+m_M^2)$:
+\begin{align}
+(\Box + m_M^2)\,G_F(x-x') = \delta^{(4)}(x-x').
+\end{align}
+Thus the kernel is fixed by the mediator dynamics:
+\begin{align}
+K(x-x') \propto G_F(x-x').
+\end{align}
+
+\subsection{Quasi-static reduction and Yukawa form}
+For quasi-static or equal-time couplings (common in lattice-style evolutions), one reduces to an
+instantaneous spatial kernel $K(\mathbf{r})$ with $\mathbf{r}=\mathbf{x}-\mathbf{x}'$:
+\begin{align}
+K(\mathbf{r})
+\;\propto\;
+G(\mathbf{r})
+\;=\;
+\frac{1}{4\pi}\frac{\ee^{-m_M r}}{r},
+\qquad r=\|\mathbf{r}\|.
+\end{align}
+This automatically gives (i) symmetry $K(\mathbf{r})=K(-\mathbf{r})$ and (ii) exponential decay,
+matching the sufficient conditions typically assumed for conservation-law and stability arguments.
+
+\subsection{Local limit and derivative expansion}
+In the heavy-mediator limit $m_M\to\infty$, one recovers a local derivative expansion:
+\begin{align}
+K(\mathbf{r}) \approx
+\frac{1}{m_M^2}\,\delta^{(3)}(\mathbf{r})
++ \frac{1}{m_M^4}\,\nabla^2\delta^{(3)}(\mathbf{r})
++\cdots,
+\end{align}
+so the theory reduces to local couplings with controlled higher-derivative corrections.
+
+\section{Local GKLS dynamics and an operational no-signalling theorem}
+\label{app:nosignalling}
+
+The modified measurement dynamics can be expressed as a completely positive, trace-preserving
+(CPTP) GKLS/Lindblad evolution with rates modulated by the local ethical field $\Eth(x)$.
+The main requirement for operational no-signalling is \emph{locality of the generator}:
+no cross-terms coupling spacelike-separated regions.
+
+\subsection{GKLS generator with $\Eth(x)$-dependent rates}
+Let $\rho(t)$ be the system density operator. Consider a GKLS evolution
+\begin{align}
+\dot\rho
+= -\frac{\ii}{\hbar}[H,\rho]
++ \sum_{\alpha}\int \dd^3x\;
+\lambda_\alpha(x)\Big(
+L_\alpha(x)\,\rho\,L_\alpha(x)^\dagger
+-\tfrac12\{L_\alpha(x)^\dagger L_\alpha(x),\rho\}
+\Big),
+\end{align}
+with local Lindblad operators $L_\alpha(x)$ supported in region $x$ and local rates
+\begin{align}
+\lambda_\alpha(x)
+= \lambda_{\alpha,0}\,\exp\!\big(\eta_\alpha\,\Eth(x)\big),
+\qquad |\eta_\alpha|\ll 1.
+\end{align}
+This form preserves trace and complete positivity for $\lambda_\alpha(x)\ge 0$.
+
+\subsection{Theorem: no-signalling under local factorization}
+We now state a standard operational no-signalling result in the language used in quantum information.
+
+\begin{theorem}[Operational no-signalling for local GKLS dynamics]
+Consider a bipartite system $\mathcal{H}=\mathcal{H}_A\otimes\mathcal{H}_B$ with
+spacelike-separated labs $A$ and $B$. Suppose the GKLS generator factorizes as
+\begin{align}
+\mathcal{L} = \mathcal{L}_A\otimes \id_B + \id_A\otimes \mathcal{L}_B,
+\end{align}
+with each $\mathcal{L}_{A/B}$ trace-preserving and completely positive, built from local operators
+and local rates (e.g.\ $\lambda_\alpha(x_A)=\lambda_{\alpha,0}\exp(\eta_\alpha\Eth(x_A))$
+depending only on local $\Eth$).
+Then the reduced state $\rho_A(t)=\Tr_B\rho_{AB}(t)$ evolves as
+\begin{align}
+\dot\rho_A = \mathcal{L}_A(\rho_A),
+\end{align}
+independent of any operation or measurement choice performed in $B$.
+Therefore marginal outcome statistics in $A$ cannot be used to signal superluminally from $B$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Starting from $\dot\rho_{AB}=\mathcal{L}(\rho_{AB})$, take the partial trace over $B$:
+\begin{align}
+\dot\rho_A
+&=
+\Tr_B\big[(\mathcal{L}_A\otimes \id_B)(\rho_{AB})\big]
++
+\Tr_B\big[(\id_A\otimes \mathcal{L}_B)(\rho_{AB})\big].
+\end{align}
+Linearity gives
+$\Tr_B[(\mathcal{L}_A\otimes \id_B)(\rho_{AB})]
+=\mathcal{L}_A(\Tr_B\rho_{AB})
+=\mathcal{L}_A(\rho_A)$.
+For the second term, trace-preservation of $\mathcal{L}_B$ implies
+$\Tr_B[(\id_A\otimes \mathcal{L}_B)(\rho_{AB})]=0$.
+Hence $\dot\rho_A=\mathcal{L}_A(\rho_A)$, which contains no dependence on remote choices in $B$.
+Operational no-signalling follows.
+\end{proof}
+
+\subsection{Connection to the ethically biased Born rule (small-bias limit)}
+A normalized exponential weighting
+\begin{align}
+P_i(\eta)=\frac{|c_i|^2\,\ee^{\eta\,\Delta \Eth_i}}{\sum_j |c_j|^2\,\ee^{\eta\,\Delta \Eth_j}},
+\qquad |\eta|\ll 1,
+\end{align}
+reduces at first order to a normalized linear deformation:
+\begin{align}
+P_i(\eta) \approx
+|c_i|^2\Big[1+\eta\big(\Delta\Eth_i-\langle\Delta\Eth\rangle\big)\Big]
++ \mathcal{O}(\eta^2),
+\qquad
+\langle\Delta\Eth\rangle:=\sum_j|c_j|^2\,\Delta\Eth_j.
+\end{align}
+This provides a consistent small-parameter bridge between discrete outcome weighting and
+continuous-time GKLS rate modulation.
+
+\section{Parameterization, constraints, and an operational inference layer}
+\label{app:constraints}
+
+To make the framework falsifiable, one must specify a minimal parameter vector and a measurement
+model linking data to latent fields and parameters.
+
+\subsection{Minimal parameter vector}
+A compact EFT parameterization sufficient for near-term tests is
+\begin{align}
+\theta = \{m_{\Phic}, m_{\Eth}, m_M;\; \lambda_{\Phic},\lambda_{\Eth},\lambda_{\Phic\Eth};\;
+g_{\Phic H}, g_{\Eth H};\; g;\; \lambda_0,\eta;\; \xi\},
+\end{align}
+where $m_{\Phic},m_{\Eth}$ are scalar masses, $m_M$ is the mediator mass setting the kernel range,
+$\lambda$'s are scalar self/cross couplings, $g_{\cdot H}$ are Higgs-portal couplings,
+$g$ is the mediator coupling generating $K$, $\lambda_0$ is a baseline collapse rate,
+$\eta$ controls ethical bias strength, and $\xi$ denotes an effective teleology coupling
+(interpretable as emergent/open-system).
+
+\subsection{Constraints by experimental channel}
+Table~\ref{tab:constraints} summarizes which channels constrain which parameter subsets.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+Channel & Constrains (primary) & Observable / summary statistic \\
+\midrule
+Collider (Higgs portal) &
+$g_{\Phic H}, g_{\Eth H}, m_{\Phic}, m_{\Eth}$ &
+Higgs invisible width, signal strengths \\
+Fifth-force / EP tests &
+$g, m_M$ (and matter couplings) &
+Yukawa deviation: $\alpha\,\ee^{-r/\lambda}$ \\
+Cosmology &
+$m_{\Eth}, \lambda_{\Eth},\xi$ &
+$w(z)$, scalar energy density, CMB/BBN bounds \\
+QRNG / lab randomness &
+$\eta,\lambda_0$ &
+Bayes factor vs.\ $p=1/2$ null \\
+Neurophys proxies (EEG/MEG) &
+map to latent $\Eth,\Phic$ &
+coherence metrics; cross-validated prediction \\
+\bottomrule
+\end{tabular}
+\caption{Minimal map from parameters to constraint channels (placeholders; fill with current bounds in the main manuscript).}
+\label{tab:constraints}
+\end{table}
+
+\subsection{Operational measurement model}
+Let $D$ denote observed data streams and let $(\Phic,\Eth)$ be latent fields. Define a likelihood
+\begin{align}
+ p(D\mid \Phic,\Eth,\theta)
+=
+ p(D_{\mathrm{collider}}\mid\theta)\,
+ p(D_{\mathrm{fifth}}\mid\theta)\,
+ p(D_{\mathrm{cosmo}}\mid\theta)\,
+ p(D_{\mathrm{qrng}}\mid \Eth,\theta)\,
+ p(D_{\mathrm{neuro}}\mid \Phic,\Eth,\theta),
+\end{align}
+with priors $p(\Phic,\Eth,\theta)$ encoding smoothness, locality, and EFT naturalness assumptions.
+
+\paragraph{Example: QRNG likelihood with ethical modulation.}
+Given bit outcomes $b_t\in\{0,1\}$ over trials $t=1,\dots,T$, define
+\begin{align}
+ b_t \sim \mathrm{Bernoulli}(p_t),
+\qquad
+ p_t = \tfrac12 + \epsilon\,s_t,
+\qquad
+ |\epsilon|\le \tfrac12,
+\end{align}
+where $s_t\in[-1,1]$ is a pre-registered, externally recorded modulation signal
+(e.g.\ task condition or normalized proxy for $\Eth$), and $\epsilon$ is an estimable bias parameter
+(to leading order, $\epsilon\propto\eta$). Under the null, $\epsilon=0$.
+Posterior inference over $\epsilon$ yields Bayes factors and credible intervals.
+
+\paragraph{Example: fifth-force mapping.}
+If the mediator induces an effective Yukawa correction to the Newtonian potential,
+\begin{align}
+V(r) =
+-\frac{Gm_1m_2}{r}\Big[1+\alpha\,\ee^{-r/\lambda}\Big],
+\qquad
+\lambda = m_M^{-1},
+\end{align}
+then experimental bounds on $(\alpha,\lambda)$ map to bounds on $g$ and $m_M$
+given matter-coupling assumptions.
+
+\subsection{Finite close-out criterion}
+A finite close-out criterion for the project is:
+\begin{enumerate}
+\item Publish a frozen minimal parameterization $\theta$ and a consolidated constraint figure/table.
+\item Pre-register one decisive test (e.g.\ QRNG protocol) with a power analysis.
+\item Report posterior constraints on $(\eta,\lambda_0)$ and at least one independent channel (collider or fifth-force).
+\item State 2--4 parameterized predictions that can be falsified within a specified experimental sensitivity.
+\end{enumerate}
+
+\section{One-page decisive predictions (parameterized)}
+\label{app:predictions}
+
+The following predictions are intentionally stated in parameterized form.
+They become crisp once the global posterior over $\theta$ is reported.
+
+\begin{enumerate}
+\item \textbf{QRNG modulation:}
+In a pre-registered protocol with modulation signal $s_t$, the posterior for $\epsilon$
+departs from zero with Bayes factor exceeding a chosen threshold if
+$|\eta|\,\mathrm{Var}(\Eth)\gtrsim \epsilon_{\min}$.
+\item \textbf{Short-range force:}
+A Yukawa deviation appears at range $\lambda=m_M^{-1}$ with strength
+$\alpha=\alpha(g,\text{matter couplings})$. Null results shrink the allowed region in $(g,m_M)$.
+\item \textbf{Collider portal:}
+Higgs-portal couplings predict either a small invisible width or small signal-strength deviations;
+current and near-future bounds constrain $(g_{\Phic H},g_{\Eth H},m_{\Phic},m_{\Eth})$.
+\item \textbf{Cosmic evolution:}
+For effective teleology coefficient $\xi\ne 0$, the scalar $\Eth$ can contribute a small,
+time-varying equation-of-state component $w(z)$; cosmological fits bound
+$(\xi,\lambda_{\Eth},m_{\Eth})$.
+\end{enumerate}
