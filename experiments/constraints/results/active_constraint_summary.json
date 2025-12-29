@@ -1,0 +1,17 @@
+{
+  "total_points": 10000,
+  "viable_points": 8500,
+  "excluded_points": 1500,
+  "constraint_counts": {
+    "ATLAS_mu": 0,
+    "Higgs_inv": 0,
+    "Fifth_force": 8500,
+    "QRNG_tilt": 0
+  },
+  "constraint_percentages": {
+    "ATLAS_mu": 0.0,
+    "Higgs_inv": 0.0,
+    "Fifth_force": 100.0,
+    "QRNG_tilt": 0.0
+  }
+}
