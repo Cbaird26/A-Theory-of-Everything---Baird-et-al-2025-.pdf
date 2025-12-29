@@ -183,13 +183,19 @@ def main():
                    help='Source name (e.g., Sushkov2011, Decca2005)')
     ap.add_argument('--merge', action='store_true',
                    help='Merge multiple exclusion curves into envelope')
-    ap.add_argument('--existing', type=str,
+    ap.add_argument('--base', type=str,
                    default='experiments/constraints/data/fifth_force_exclusion.csv',
-                   help='Existing exclusion curve CSV')
+                   help='Base exclusion curve CSV')
+    ap.add_argument('--add', type=str, nargs='+',
+                   help='Additional exclusion curve CSV(s) to merge')
+    ap.add_argument('--existing', type=str,
+                   help='[Deprecated] Use --base instead')
     ap.add_argument('--new', type=str, nargs='+',
-                   help='New exclusion curve CSV(s) to merge')
+                   help='[Deprecated] Use --add instead')
     ap.add_argument('--out', type=str, required=True,
                    help='Output CSV path')
+    ap.add_argument('--plot', type=str,
+                   help='Output path for comparison plot (optional)')
     args = ap.parse_args()
     
     if args.create_template:
@@ -198,15 +204,24 @@ def main():
         return 0
     
     if args.merge:
-        if not args.new:
-            print("Error: --new required when using --merge")
+        # Support both old and new argument names
+        base_path = Path(args.base if args.base else (args.existing or 'experiments/constraints/data/fifth_force_exclusion.csv'))
+        add_paths = [Path(p) for p in (args.add or args.new or [])]
+        
+        if not add_paths:
+            print("Error: --add (or --new) required when using --merge")
             return 1
         
-        existing_path = Path(args.existing)
-        new_paths = [Path(p) for p in args.new]
         output_path = Path(args.out)
+        plot_path = Path(args.plot) if args.plot else None
         
-        merge_curves(existing_path, new_paths, output_path, create_envelope=True)
+        merge_curves(base_path, add_paths, output_path, create_envelope=True)
+        
+        if plot_path:
+            # Load and plot the merged result
+            merged_df = pd.read_csv(output_path)
+            plot_comparison(merged_df, plot_path)
+        
         return 0
     
     print("Error: Must specify --create-template or --merge")
