@@ -2,6 +2,17 @@
   "lambda_min": 4.0000000000000014e-08,
   "lambda_max": 1.0,
   "alpha_max_allowed": 1.232846739442066e-06,
-  "exclusion_points": 2650,
-  "source": "envelope (Kapner + Sushkov2011 + Geraci2008 + Decca2005 + ChenDecca2016)"
+  "exclusion_points": 5944,
+  "source": "envelope (Kapner + Sushkov2011 + Geraci2008 + Decca2005 + ChenDecca2016 + Smullin2005 + Chiaverini2003 + Tan2016 + EotWashMaster)",
+  "sources_list": [
+    "Sushkov2011",
+    "envelope",
+    "Geraci2008",
+    "Decca2005",
+    "ChenDecca2016",
+    "Smullin2005",
+    "Chiaverini2003",
+    "Tan2016",
+    "EotWashMaster"
+  ]
 }
