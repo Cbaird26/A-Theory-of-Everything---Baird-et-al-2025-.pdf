@@ -134,9 +134,30 @@ MQGT--SCF embeds mind and value into the same mathematical fabric as SM and GR w
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.9\linewidth]{figures/global_constraints.png}
-\caption{Combined constraints across channels. QRNG bounds are derived from real hardware QRNG data (LfD/ID Quantique), within-run protocol, ($n=400{,}000$) bits, reporting the 95\% credible interval $\epsilon \in [-2.29\times 10^{-3}, 8.07\times 10^{-4}]$. Fifth-force bounds use a digitized exclusion contour from Kapner (2007)~\cite{Kapner2007} mapped into our Yukawa parameterization. Higgs-portal limits use ATLAS Run-2 constraints: invisible width $\Gamma_{\text{inv}}<0.69$~MeV (from VBF BR$_{\text{inv}}<0.145$ at 95\% CL~\cite{ATLASinvisible}, assuming $\Gamma_H^{\text{SM}}\approx 4.07$~MeV) and signal strength deviation $|\mu-1|<0.13$ (from $\mu=1.023^{+0.056}_{-0.053}$~\cite{ATLASinvisible}). Under these stated assumptions, the intersection of constraints is non-empty, yielding a viable parameter region for the EFT.}
-\label{fig:global_constraints}
-\end{figure}
+    \caption{Combined constraints across channels. QRNG bounds are derived from real hardware QRNG data (LfD/ID Quantique), within-run protocol, ($n=400{,}000$) bits, reporting the 95\% credible interval $\epsilon \in [-2.29\times 10^{-3}, 8.07\times 10^{-4}]$. Fifth-force bounds use a digitized exclusion contour from Kapner (2007)~\cite{Kapner2007} mapped into our Yukawa parameterization. Higgs-portal limits use ATLAS Run-2 constraints: invisible width $\Gamma_{\text{inv}}<0.69$~MeV (from VBF BR$_{\text{inv}}<0.145$ at 95\% CL~\cite{ATLASinvisible}, assuming $\Gamma_H^{\text{SM}}\approx 4.07$~MeV) and signal strength deviation $|\mu-1|<0.13$ (from $\mu=1.023^{+0.056}_{-0.053}$~\cite{ATLASinvisible}). Under these stated assumptions, the intersection of constraints is non-empty, yielding a viable parameter region for the EFT.}
+    \label{fig:global_constraints}
+    \end{figure}
+
+    \subsection{Viable parameter island (multi-channel overlap coordinates)}
+    Using the overlap check across channels (QRNG bounds, digitized fifth-force exclusion, and ATLAS Higgs constraints; under stated assumptions), we obtain a non-empty viable region in the scanned parameter space. The overlap script reports the surviving ``island'' coordinates and percentiles (see \texttt{experiments/constraints/results/overlap\_island\_summary.json}).
+
+    In the Yukawa fifth-force parameterization, the surviving range parameter spans
+    \[
+    \lambda \in [10^{-6},\,1]\ \mathrm{m},
+    \]
+    with a median near $\lambda \approx 10^{-3}\ \mathrm{m}$ (millimeter scale) in the current grid. The corresponding strength parameter is bounded within the scanned grid by
+    \[
+    \alpha \in [10^{-12},\,7.54\times 10^{-7}],
+    \]
+    with the upper tail constrained by the digitized Kapner (2007) exclusion contour in the adopted mapping.
+
+    For the QRNG channel, the operational bias parameter is bounded by the two-sided 95\% credible interval from the $n=400{,}000$ hardware run,
+    \[
+    \epsilon \in [-2.29\times 10^{-3},\,8.07\times 10^{-4}],
+    \]
+    consistent with the baseline (no-tilt) limit at the tested sensitivity. Under these stated assumptions and the present scan resolution, the overlap region contains $N=1650$ viable grid points, indicating a finite (non-degenerate) surviving parameter patch rather than a single fine-tuned point.
+
+    These coordinates define the current ``safe flight'' region of the EFT under the included constraints. Future tightening is straightforward: incorporate an envelope of additional fifth-force bounds, refine collider constraints beyond conservative proxies, and replicate QRNG bounds on independent sources; each step updates the overlap map without altering the underlying formalism.
 
 \clearpage
 \appendix
