@@ -1,0 +1,13 @@
+{
+  "invisible_width_limit": 0.1,
+  "signal_strength_deviation": 0.05,
+  "mass_range_gev": [
+    1.0,
+    1000.0
+  ],
+  "coupling_range": [
+    1e-06,
+    0.01
+  ],
+  "note": "Placeholder limits - replace with real LHC/HL-LHC bounds"
+}
