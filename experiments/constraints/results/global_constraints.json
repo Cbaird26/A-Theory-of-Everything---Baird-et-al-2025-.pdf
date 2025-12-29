@@ -1,0 +1,26 @@
+{
+  "qrng": {
+    "epsilon_upper_95": 0.0008069864756103939,
+    "epsilon_lower_95": -0.002291972018104216,
+    "BF10": 0.0030801518646010285,
+    "n": 400000
+  },
+  "fifth_force": {
+    "lambda_min": 1e-06,
+    "lambda_max": 1.0,
+    "alpha_max_allowed": 1e-06,
+    "exclusion_points": 33
+  },
+  "higgs_portal": {
+    "mass_range_gev": [
+      1.0,
+      1000.0
+    ],
+    "coupling_range": [
+      1e-06,
+      1.0
+    ],
+    "invisible_width_limit_mev": 0.1,
+    "signal_strength_deviation": 0.13
+  }
+}

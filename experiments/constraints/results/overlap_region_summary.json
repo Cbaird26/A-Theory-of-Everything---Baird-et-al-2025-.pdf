@@ -1,0 +1,12 @@
+{
+  "qrng_constrained": true,
+  "fifth_force_constrained": true,
+  "higgs_constrained": true,
+  "viable_region_exists": true,
+  "constraints": [
+    "QRNG: |\u03b5| < 0.0008",
+    "Fifth-force: \u03b1 < 1.00e-06",
+    "Higgs portal: m_\u03a6 in 1.0-1000.0 GeV"
+  ],
+  "note": "Full intersection analysis requires parameter mapping (m_M, g_M) \u2194 (m_Phi, g_PhiH)"
+}

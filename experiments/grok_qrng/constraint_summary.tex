@@ -1,0 +1,14 @@
+% Constraint Summary: Baseline + Modulation Tests
+% Auto-generated constraint summary for paper
+
+\paragraph{QRNG experimental constraints.}
+We report constraints on bias and modulation parameters from hardware QRNG data (ID Quantique source via LfD API).
+A baseline test with $n=200{,}000$ bits yielded strong Bayesian evidence against constant bias
+($\mathrm{BF}_{10}=3.86\times 10^{-3}$) with 95\% credible interval $|\epsilon|<3.086\times 10^{-3}$.
+A preregistered within-run modulation test with $n=400{,}000$ bits using an alternating protocol
+(neutral vs coherence blocks) found no evidence for protocol-linked modulation
+($\hat{\beta}=-5.57\times 10^{-3}$ in logit units, minimal log-likelihood improvement consistent with noise).
+Combined, these results constrain both constant bias terms and simple within-run modulation to be small
+at the sensitivity of these datasets, mapping to upper bounds on the effective ethical-bias strength $|\eta|$
+under the operational link $\epsilon \propto \eta(\Delta E - \langle \Delta E\rangle)$.
+
