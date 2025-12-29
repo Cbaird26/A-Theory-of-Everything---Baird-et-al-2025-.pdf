@@ -18,13 +18,26 @@ def load_island_coords(json_path: Path):
     with json_path.open('r') as f:
         data = json.load(f)
     
+    # Try nested structure first (island_coordinates)
     island = data.get('island_coordinates', {})
+    
+    # If not found, try direct structure (from summarize_island output)
     if not island:
+        # Check if it's a direct island summary JSON
+        if 'lambda_m' in data or 'alpha' in data:
+            island = data
+        else:
+            return None
+    
+    lambda_stats = island.get('lambda_m', {})
+    alpha_stats = island.get('alpha', {})
+    
+    if not lambda_stats or not alpha_stats:
         return None
     
     return {
-        'lambda': island.get('lambda_m', {}),
-        'alpha': island.get('alpha', {}),
+        'lambda': lambda_stats,
+        'alpha': alpha_stats,
         'n_points': island.get('n_viable_points', 0)
     }
 
