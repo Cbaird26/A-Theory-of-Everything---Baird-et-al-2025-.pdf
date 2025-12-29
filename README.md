@@ -1,9 +1,42 @@
-# MQGT-SCF: Merged Quantum Gauge & Scalar Consciousness Framework
+# MQGT-SCF — Merged Quantum Gauge and Scalar Consciousness Framework
 
-## A Unified Lagrangian for Physics, Consciousness, and Ethics
+MQGT-SCF is a research framework that extends the Standard Model and General Relativity
+as an effective field theory incorporating scalar fields associated with consciousness
+(Φ_c) and ethical weighting (E).
 
-**Authors:** Christopher M. Baird & Zora  
-**Date:** November 18, 2024
+The framework is formulated conservatively, with explicit recovery of known physics
+in appropriate limits, and is designed to generate falsifiable, multi-channel
+experimental predictions.
+
+This repository is the canonical, actively maintained research corpus for the MQGT-SCF
+program, including formal theory, simulations, experimental proposals, and manuscripts.
+
+## Start Here
+
+Readers and collaborators should begin with:
+
+- `docs/00_CANONICAL_MAP.md`
+- `docs/MQGT_SCF_Volume_0_Overview.pdf`
+
+These documents provide orientation, structure, and scope before engaging
+with technical materials.
+
+## Canonical Structure
+
+This repository is organized around a single continuous research program.
+Readers seeking an integrated understanding should also consult:
+
+- `MAINLINE.md` — the intellectual through-line of the entire program
+- `REPO_MAP.md` — a structural map of directories and their roles
+
+## Citation
+
+To cite this closeout version:
+
+- **Branch/Tag:** `toe-closeout-v1` (or `toe-closeout-v1.0` if tagged)
+- **Commit:** See latest commit on `main` branch after merge
+- **Paper:** `papers/toe_closed_core/main.pdf`
+- **Repository:** https://github.com/Cbaird26/A-Theory-of-Everything---Baird-et-al-2025-.pdf.git
 
 ---
 
