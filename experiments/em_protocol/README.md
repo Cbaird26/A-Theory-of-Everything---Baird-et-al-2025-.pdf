@@ -2,6 +2,15 @@
 
 This directory contains the preregistration, analysis scripts, and data collection protocols for testing protocol-linked EM modulation as predicted by the MQGT-SCF framework.
 
+## ⚡ FASTEST START: A-B-A Pilot (15 minutes)
+
+**Want to test right now?** See `QUICK_START_A_B_A.md` for a clean 15-minute pilot:
+- 5 min baseline → 5 min coherence → 5 min baseline
+- Simple A-B-A design
+- Minimal setup, maximum clarity
+
+---
+
 ## 🚀 Quick Start: Phone Magnetometer Test (30 minutes)
 
 **Goal:** Record magnetometer data, convert to analysis format, run analysis.
