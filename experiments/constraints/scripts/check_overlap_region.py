@@ -87,6 +87,42 @@ def compute_viable_region(qrng_bounds: Optional[Dict],
         # For now, assume viable region exists if constraints are not mutually exclusive
         summary['viable_region_exists'] = True
         summary['note'] = "Full intersection analysis requires parameter mapping (m_M, g_M) ↔ (m_Phi, g_PhiH)"
+        
+        # Extract QRNG bounds for island summary
+        qrng_eps_upper = qrng_bounds.get('epsilon_upper_95') if qrng_bounds else None
+        qrng_eps_lower = qrng_bounds.get('epsilon_lower_95') if qrng_bounds else None
+        
+        # Create a simple parameter grid for island summary
+        # This is a placeholder - real implementation would scan actual parameter space
+        # For now, we'll create a dummy grid to show the structure
+        lambda_range = np.logspace(-6, 0, 50)  # 1e-6 to 1 m
+        alpha_range = np.logspace(-12, -3, 50)  # 1e-12 to 1e-3
+        LAMBDA_GRID, ALPHA_GRID = np.meshgrid(lambda_range, alpha_range)
+        
+        # Simple viable mask: points below fifth-force exclusion
+        ff_alpha_max = ff_bounds.get('alpha_max_allowed', 1e-6) if ff_bounds else 1e-6
+        viable_mask = ALPHA_GRID < ff_alpha_max
+        
+        # Summarize the island
+        island_summary = summarize_island(
+            mask=viable_mask,
+            grids={
+                "lambda_m": LAMBDA_GRID,
+                "alpha": ALPHA_GRID,
+            },
+            out_json=str(output_path.parent / "overlap_island_summary.json")
+        )
+        
+        # Add QRNG bounds to summary
+        if qrng_eps_upper is not None and qrng_eps_lower is not None:
+            summary['qrng_epsilon_bounds'] = {
+                "lower_95": float(qrng_eps_lower),
+                "upper_95": float(qrng_eps_upper),
+                "magnitude_max": float(max(abs(qrng_eps_lower), abs(qrng_eps_upper)))
+            }
+        
+        if island_summary:
+            summary['island_coordinates'] = island_summary
     
     return summary
 
