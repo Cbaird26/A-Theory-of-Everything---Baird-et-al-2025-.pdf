@@ -99,14 +99,14 @@ This framework builds upon:
 
 ## 🔬 Framework Properties
 
-- ✅ **Renormalizable** - Power-counting renormalizable at effective level
+- ✅ **EFT** - Effective field theory (power-counting renormalizable at effective level)
 - ✅ **Lorentz Invariant** - Maintains local Lorentz symmetry
 - ✅ **Testable** - Concrete, falsifiable experimental signatures
 - ✅ **Holographic** - Embedding in AdS/CFT correspondence
 
 ## 📖 Abstract
 
-We formalize the Merged Quantum Gauge and Scalar Consciousness Framework (MQGT--SCF), which supplements General Relativity and the Standard Model with two real scalar fields: a consciousness field Φ_c(x) and an ethical field E(x). We present a compact renormalizable Lagrangian density, derive the Euler--Lagrange equations, specify quantization and interaction structure for the new sectors, and provide testable predictions (e.g., ethically weighted Born-rule deviations, interferometric phase shifts). The framework admits a holographic embedding and suggests experimental programs involving quantum random number generators, interferometry, gravitational waves, and neural recordings.
+We formalize the Merged Quantum Gauge and Scalar Consciousness Framework (MQGT--SCF), which supplements General Relativity and the Standard Model with two real scalar fields: a consciousness field Φ_c(x) and an ethical field E(x). We present a compact EFT Lagrangian density, derive the Euler--Lagrange equations, specify quantization and interaction structure for the new sectors, and provide testable predictions (e.g., ethically weighted Born-rule deviations, interferometric phase shifts). The framework admits a holographic embedding and suggests experimental programs involving quantum random number generators, interferometry, gravitational waves, and neural recordings.
 
 ## 🤝 Collaboration & Review
 
