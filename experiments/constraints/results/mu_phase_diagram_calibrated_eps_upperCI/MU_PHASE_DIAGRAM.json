@@ -1,0 +1,88 @@
+{
+  "sweep_parameters": {
+    "mu_sb_range": {
+      "min_ratio": 0.0001,
+      "max_ratio": 1.0,
+      "n_points": 5,
+      "values": [
+        0.0001,
+        0.001,
+        0.01,
+        0.1,
+        1.0
+      ]
+    },
+    "m_phi_range": {
+      "min": 2e-16,
+      "max": 2e-10,
+      "n_points": 20
+    },
+    "theta_range": {
+      "min": 1e-22,
+      "max": 1e-18,
+      "n_points": 20
+    }
+  },
+  "results": [
+    {
+      "mu_sb": 0.0125,
+      "mu_sb_ratio": 0.0001,
+      "log10_mu_sb_ratio": -4.0,
+      "n_viable": 400,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 70.0,
+        "Fifth_force": 30.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.125,
+      "mu_sb_ratio": 0.001,
+      "log10_mu_sb_ratio": -3.0,
+      "n_viable": 400,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 25.0,
+        "Fifth_force": 75.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 1.25,
+      "mu_sb_ratio": 0.01,
+      "log10_mu_sb_ratio": -2.0,
+      "n_viable": 400,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 12.5,
+      "mu_sb_ratio": 0.1,
+      "log10_mu_sb_ratio": -1.0,
+      "n_viable": 400,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 125.0,
+      "mu_sb_ratio": 1.0,
+      "log10_mu_sb_ratio": 0.0,
+      "n_viable": 240,
+      "constraint_dominance": {
+        "ATLAS_mu": 16.666666666666668,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 83.33333333333333,
+        "QRNG_tilt": 0.0
+      }
+    }
+  ]
+}

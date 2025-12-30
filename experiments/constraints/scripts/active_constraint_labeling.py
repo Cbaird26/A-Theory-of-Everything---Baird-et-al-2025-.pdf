@@ -26,7 +26,7 @@ CONSTRAINT_LABELS = {
 }
 
 
-def compute_atlas_mu_slack(alpha: float, lambda_m: float) -> float:
+def compute_atlas_mu_slack(alpha: float, lambda_m: float) -> Tuple[float, float]:
     """
     Compute slack to ATLAS μ constraint.
     
@@ -41,13 +41,16 @@ def compute_atlas_mu_slack(alpha: float, lambda_m: float) -> float:
         lambda_m: Range (m)
     
     Returns:
-        Slack (positive if viable, negative if excluded)
+        (slack, bound) where:
+          slack: Slack (positive if viable, negative if excluded)
+          bound: 2σ uncertainty (0.112) for normalization
     """
     # Simplified: μ deviation scales with α
     # More complete would map α → portal coupling → μ
     mu_deviation = alpha * 1e6  # Rough scaling
     mu_upper = 1.023 + 2 * 0.056  # 2σ upper limit
     mu_lower = 1.023 - 2 * 0.056  # 2σ lower limit
+    bound = 2 * 0.056  # 2σ uncertainty for normalization
     
     # Slack is distance to nearest violation
     if mu_deviation > 0:
@@ -55,26 +58,30 @@ def compute_atlas_mu_slack(alpha: float, lambda_m: float) -> float:
     else:
         slack = (1.0 + mu_deviation) - mu_lower
     
-    return slack
+    return slack, bound
 
 
-def compute_higgs_inv_slack(alpha: float, lambda_m: float, m_phi: float) -> float:
+def compute_higgs_inv_slack(alpha: float, lambda_m: float, m_phi: float, 
+                            br_max: float = 0.145) -> Tuple[float, float]:
     """
     Compute slack to Higgs invisible width constraint.
     
-    BR(H→inv) < 0.145 @ 95% CL
+    BR(H→inv) < 0.145 @ 95% CL (conservative) or ~0.107 (tight mode)
     Portal coupling affects invisible branching ratio.
     
     Simplified: BR(H→inv) ∝ α (for small mixing)
-    Slack = 0.145 - BR(H→inv)
+    Slack = br_max - BR(H→inv)
     
     Args:
         alpha: Yukawa strength
         lambda_m: Range (m)
         m_phi: Scalar mass (GeV) - needed for phase space
+        br_max: Maximum allowed BR (default 0.145 conservative, 0.107 tight)
     
     Returns:
-        Slack (positive if viable, negative if excluded)
+        (slack, bound) where:
+          slack: Slack (positive if viable, negative if excluded)
+          bound: Maximum allowed BR (for normalization)
     """
     # Simplified: BR scales with α
     # More complete: BR = Γ(H→φφ) / Γ_H_total
@@ -84,28 +91,36 @@ def compute_higgs_inv_slack(alpha: float, lambda_m: float, m_phi: float) -> floa
     else:
         br_inv = 0.0  # Phase space closed
     
-    slack = 0.145 - br_inv
-    return slack
+    slack = br_max - br_inv
+    return slack, br_max
 
 
 def compute_fifth_force_slack(alpha: float, lambda_m: float,
                               envelope_data: Optional[pd.DataFrame] = None,
-                              alpha_max_allowed: Optional[float] = None) -> float:
+                              alpha_max_allowed: Optional[float] = None,
+                              Theta_lab: float = 1.0) -> Tuple[float, float]:
     """
     Compute slack to fifth-force envelope constraint.
     
     Uses existing envelope or alpha_max_allowed.
-    Slack = alpha_max_allowed - alpha
+    Applies screening factor Θ_lab to alpha (for macroscopic experiments).
+    Slack = alpha_max_allowed - alpha_eff where alpha_eff = Theta_lab^2 * alpha
     
     Args:
-        alpha: Yukawa strength
+        alpha: Yukawa strength (unscreened)
         lambda_m: Range (m)
         envelope_data: Optional envelope DataFrame
         alpha_max_allowed: Optional maximum allowed alpha
+        Theta_lab: Screening factor for lab experiments (default 1.0 = unscreened)
     
     Returns:
-        Slack (positive if viable, negative if excluded)
+        (slack, bound) where:
+          slack: Slack (positive if viable, negative if excluded)
+          bound: Maximum allowed alpha (for normalization)
     """
+    # Apply screening: alpha_eff = Theta_lab^2 * alpha
+    alpha_eff = (Theta_lab ** 2) * alpha
+    
     if alpha_max_allowed is not None:
         alpha_max = alpha_max_allowed
     elif envelope_data is not None:
@@ -121,16 +136,17 @@ def compute_fifth_force_slack(alpha: float, lambda_m: float,
     else:
         alpha_max = 1e-6  # Default from bounds JSON
     
-    slack = alpha_max - alpha
-    return slack
+    slack = alpha_max - alpha_eff
+    return slack, alpha_max
 
 
 def compute_qrng_tilt_slack(alpha: float, lambda_m: float,
-                            epsilon_max: float = 0.0008) -> float:
+                            epsilon_max: float = 0.002292) -> Tuple[float, float]:
     """
     Compute slack to QRNG tilt constraint.
     
-    |ε| < 0.0008 (from lfdr_withinrun results)
+    |ε| < 0.002292 (from lfdr_withinrun results, 95% CL)
+    Updated from 0.0008 to match experimental data (calibrate_qrng_physics.py)
     Tilt relates to ethical bias: ε ∝ η(ΔE - ⟨ΔE⟩)
     For small mixing: η ∝ α
     
@@ -143,40 +159,53 @@ def compute_qrng_tilt_slack(alpha: float, lambda_m: float,
         epsilon_max: Maximum allowed tilt (default 0.0008)
     
     Returns:
-        Slack (positive if viable, negative if excluded)
+        (slack, bound) where:
+          slack: Slack (positive if viable, negative if excluded)
+          bound: Maximum allowed epsilon (for normalization)
     """
     # Simplified: ε scales with α
     epsilon = alpha * 1e3  # Rough scaling
     slack = epsilon_max - abs(epsilon)
-    return slack
+    return slack, epsilon_max
 
 
 def label_constraints_for_grid(lambda_grid: np.ndarray, alpha_grid: np.ndarray,
                                m_phi_grid: Optional[np.ndarray] = None,
                                envelope_data: Optional[pd.DataFrame] = None,
                                alpha_max_allowed: Optional[float] = None,
-                               epsilon_max: float = 0.0008) -> Tuple[np.ndarray, np.ndarray]:
+                               epsilon_max: float = 0.002292,
+                               Theta_lab: float = 1.0,
+                               br_max: float = 0.145,
+                               use_normalized_slack: bool = True) -> Tuple[np.ndarray, np.ndarray]:
     """
     Label each point in grid with tightest constraint.
     
+    Uses normalized slack for comparison: normalized_slack = slack / bound
+    This allows fair comparison across constraints with different scales.
+    
     Args:
         lambda_grid: Lambda values (m)
-        alpha_grid: Alpha values
+        alpha_grid: Alpha values (unscreened)
         m_phi_grid: Optional scalar mass grid (GeV) for Higgs constraint
         envelope_data: Optional envelope DataFrame
         alpha_max_allowed: Optional maximum allowed alpha
         epsilon_max: Maximum allowed QRNG tilt
+        Theta_lab: Screening factor for lab experiments (applied only to fifth-force)
+        br_max: Maximum allowed BR(H→inv) (default 0.145 conservative, 0.107 tight)
+        use_normalized_slack: If True, compare normalized slack instead of raw slack
     
     Returns:
         (constraint_labels, slacks) where:
           constraint_labels: array of constraint indices (-1=excluded, 0-3=constraint types)
-          slacks: array of (n_points, n_constraints) slack values
+          slacks: array of (n_points, n_constraints) slack values (raw or normalized based on flag)
     """
     shape = lambda_grid.shape
     n_constraints = 4
     
     # Initialize
-    slacks = np.zeros((shape[0], shape[1], n_constraints))
+    slacks_raw = np.zeros((shape[0], shape[1], n_constraints))
+    slacks_normalized = np.zeros((shape[0], shape[1], n_constraints))
+    bounds = np.zeros((shape[0], shape[1], n_constraints))
     constraint_labels = np.full(shape, -1, dtype=int)
     
     # Compute slacks for each constraint
@@ -193,20 +222,45 @@ def label_constraints_for_grid(lambda_grid: np.ndarray, alpha_grid: np.ndarray,
                 # Using ħc ≈ 197.3e-15 GeV·m
                 m_phi = 197.3e-15 / lam  # GeV
             
-            # Compute slacks
-            slacks[i, j, 0] = compute_atlas_mu_slack(alp, lam)
-            slacks[i, j, 1] = compute_higgs_inv_slack(alp, lam, m_phi)
-            slacks[i, j, 2] = compute_fifth_force_slack(alp, lam, envelope_data, alpha_max_allowed)
-            slacks[i, j, 3] = compute_qrng_tilt_slack(alp, lam, epsilon_max)
+            # Compute slacks (now return (slack, bound) tuples)
+            # Collider constraints: unscreened (Θ_collider = 1, collisions are microscopic/high-energy)
+            slack_atlas, bound_atlas = compute_atlas_mu_slack(alp, lam)
+            slack_higgs, bound_higgs = compute_higgs_inv_slack(alp, lam, m_phi, br_max=br_max)
+            # Fifth-force: screened (Θ_lab << 1 for macroscopic experiments)
+            slack_ff, bound_ff = compute_fifth_force_slack(alp, lam, envelope_data, alpha_max_allowed, Theta_lab=Theta_lab)
+            slack_qrng, bound_qrng = compute_qrng_tilt_slack(alp, lam, epsilon_max)
+            
+            # Store raw slacks and bounds
+            slacks_raw[i, j, 0] = slack_atlas
+            slacks_raw[i, j, 1] = slack_higgs
+            slacks_raw[i, j, 2] = slack_ff
+            slacks_raw[i, j, 3] = slack_qrng
+            
+            bounds[i, j, 0] = bound_atlas
+            bounds[i, j, 1] = bound_higgs
+            bounds[i, j, 2] = bound_ff
+            bounds[i, j, 3] = bound_qrng
+            
+            # Compute normalized slack: (bound - value) / bound = slack / bound
+            # For constraints where slack = bound - value, normalized_slack = slack / bound
+            slacks_normalized[i, j, 0] = slack_atlas / bound_atlas if bound_atlas > 0 else slack_atlas
+            slacks_normalized[i, j, 1] = slack_higgs / bound_higgs if bound_higgs > 0 else slack_higgs
+            slacks_normalized[i, j, 2] = slack_ff / bound_ff if bound_ff > 0 else slack_ff
+            slacks_normalized[i, j, 3] = slack_qrng / bound_qrng if bound_qrng > 0 else slack_qrng
+            
+            # Use normalized or raw slack for comparison
+            slacks_to_compare = slacks_normalized if use_normalized_slack else slacks_raw
             
             # Check if viable (all slacks > 0)
-            if np.all(slacks[i, j, :] > 0):
-                # Find tightest constraint (smallest slack)
-                tightest = np.argmin(slacks[i, j, :])
+            if np.all(slacks_to_compare[i, j, :] > 0):
+                # Find tightest constraint (smallest normalized slack)
+                tightest = np.argmin(slacks_to_compare[i, j, :])
                 constraint_labels[i, j] = tightest
             else:
                 constraint_labels[i, j] = -1  # Excluded
     
+    # Return the slacks that were used for comparison
+    slacks = slacks_normalized if use_normalized_slack else slacks_raw
     return constraint_labels, slacks
 
 

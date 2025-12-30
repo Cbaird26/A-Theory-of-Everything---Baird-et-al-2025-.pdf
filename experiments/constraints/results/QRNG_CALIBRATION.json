@@ -1,0 +1,74 @@
+{
+  "sources": [
+    {
+      "source_id": "lfdr_withinrun",
+      "timestamp_range": {
+        "start": "2024-01-01 00:00:00",
+        "end": "2024-01-05 15:06:39"
+      },
+      "n_trials": 400000,
+      "epsilon_max": 0.0007424999999999793,
+      "epsilon_max_ci_lower": 2.999999999997449e-05,
+      "epsilon_max_ci_upper": 0.002353374999999979,
+      "method": "bootstrap_95",
+      "preprocessing": {
+        "window_size": null,
+        "n_bootstrap": 1000
+      },
+      "meta": {
+        "n": 400000,
+        "k": 199703,
+        "p_hat": 0.4992575,
+        "epsilon_hat": -0.0007424999999999793,
+        "epsilon_lower_95": -0.002291972018104216,
+        "epsilon_upper_95": 0.0008069864756103939,
+        "bf10": 0.0030801518646010285,
+        "original_path": "experiments/grok_qrng/results/lfdr_withinrun/global_summary.json"
+      },
+      "data_hash": "e0b59edc45129605de0dbcad3ab1b85a227f8dad19f0da9e58ad767c2c3212a6"
+    }
+  ],
+  "pooled": {
+    "epsilon_max": 0.0007424999999999793,
+    "ci_lower": 0.0,
+    "ci_upper": 0.0019041874999999816,
+    "method": "meta_analysis_inverse_variance"
+  },
+  "sensitivity": {
+    "window_size_effects": [
+      {
+        "window_size": 10000,
+        "epsilon_max": 0.01529999999999998,
+        "ci_lower": 3.500000000000725e-05,
+        "ci_upper": 0.0023500000000000187
+      },
+      {
+        "window_size": 50000,
+        "epsilon_max": 0.005900000000000016,
+        "ci_lower": 4.7499999999978115e-05,
+        "ci_upper": 0.002192499999999986
+      },
+      {
+        "window_size": 100000,
+        "epsilon_max": 0.0036399999999999766,
+        "ci_lower": 4.243749999994773e-05,
+        "ci_upper": 0.00227293750000001
+      },
+      {
+        "window_size": "full",
+        "epsilon_max": 0.0007424999999999793,
+        "ci_lower": 3.7500000000023626e-05,
+        "ci_upper": 0.002295312499999992
+      }
+    ]
+  },
+  "reproducibility": {
+    "script_path": "/Users/christophermichaelbaird/mqgt-scf-paper/experiments/constraints/scripts/calibrate_qrng_multisource.py",
+    "script_hash": "14120dc8a8e35e995a6f6dd8a88436aee6f78b04e61d232b15858f5f0c380355",
+    "data_hashes": {
+      "lfdr_withinrun": "e0b59edc45129605de0dbcad3ab1b85a227f8dad19f0da9e58ad767c2c3212a6"
+    },
+    "method": "bootstrap_95",
+    "n_bootstrap": 1000
+  }
+}

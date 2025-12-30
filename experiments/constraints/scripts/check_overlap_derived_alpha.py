@@ -54,7 +54,11 @@ def compute_viable_region_derived_alpha(
     model: str = 'simple',
     rho: float = 0.0,
     screening: bool = False,
-    Theta: float = 1.0,
+    Theta: float = 1.0,  # Legacy: global screening (deprecated, use Theta_lab)
+    Theta_lab: float = 1.0,  # Screening for lab experiments (fifth-force only)
+    br_max: float = 0.145,  # Maximum allowed BR(H→inv): 0.145 conservative, 0.107 tight
+    use_normalized_slack: bool = True,  # Use normalized slack for dominance comparison
+    mu_sb: Optional[float] = None,  # Scale breaking mass (GeV, optional). If provided, applies (μ_sb/m_h)^4 suppression. Note: distinct from ATLAS signal strength μ.
     output_dir: Optional[Path] = None
 ) -> Dict:
     """
@@ -92,7 +96,8 @@ def compute_viable_region_derived_alpha(
                     rho=rho,
                     model=model,
                     screening=screening,
-                    Theta=Theta
+                    Theta=Theta,
+                    mu_sb=mu_sb
                 )
                 LAMBDA_GRID[i, j] = lambda_m
                 ALPHA_GRID[i, j] = alpha
@@ -106,19 +111,41 @@ def compute_viable_region_derived_alpha(
     if ff_bounds:
         alpha_max_allowed = ff_bounds.get('alpha_max_allowed')
     
-    epsilon_max = 0.0008
+    # Try to load calibrated epsilon_max from multi-source calibration
+    epsilon_max = 0.002292  # Default (previous data-derived value)
+    calibration_path = Path('experiments/constraints/results/QRNG_CALIBRATION.json')
+    if calibration_path.exists():
+        try:
+            import json
+            with open(calibration_path, 'r') as f:
+                calibration = json.load(f)
+            pooled = calibration.get('pooled', {})
+            if 'epsilon_max' in pooled:
+                epsilon_max = pooled['epsilon_max']
+                print(f"Using calibrated ε_max from multi-source calibration: {epsilon_max:.6f}")
+        except Exception as e:
+            print(f"Warning: Could not load calibrated epsilon_max: {e}")
+            print(f"  Falling back to default or qrng_bounds value")
+    
+    # Override with qrng_bounds if provided (for backward compatibility)
     if qrng_bounds:
         eps_upper = qrng_bounds.get('epsilon_upper_95')
         if eps_upper is not None:
             epsilon_max = abs(eps_upper)
+            print(f"Using ε_max from qrng_bounds: {epsilon_max:.6f}")
     
     # Label constraints
+    # Use Theta_lab for differential screening (fifth-force only, collider unscreened)
+    # Use normalized slack for fair comparison across constraints
     constraint_labels, slacks = label_constraints_for_grid(
         LAMBDA_GRID, ALPHA_GRID,
         m_phi_grid=M_PHI_GRID,
         envelope_data=envelope_data,
         alpha_max_allowed=alpha_max_allowed,
-        epsilon_max=epsilon_max
+        epsilon_max=epsilon_max,
+        Theta_lab=Theta_lab,
+        br_max=br_max,
+        use_normalized_slack=use_normalized_slack
     )
     
     # Create viable mask
@@ -267,7 +294,18 @@ def main():
     ap.add_argument('--screening', action='store_true',
                    help='Enable screening suppression')
     ap.add_argument('--Theta', type=float, default=1.0,
-                   help='Screening factor Θ (0 < Θ ≤ 1, default 1.0 = unscreened)')
+                   help='Legacy: Global screening factor (deprecated, use --Theta-lab)')
+    ap.add_argument('--Theta-lab', type=float, default=1.0,
+                   help='Screening factor for lab experiments (fifth-force only, 0 < Θ ≤ 1, default 1.0 = unscreened). Collider constraints remain unscreened.')
+    ap.add_argument('--br-max', type=float, default=0.145,
+                   help='Maximum allowed BR(H→inv): 0.145 (conservative) or 0.107 (tight mode)')
+    ap.add_argument('--mu-sb', type=float, default=None,
+                   dest='mu_sb',
+                   help='Scale breaking mass μ_sb (GeV, optional). If provided, applies (μ_sb/m_h)^4 suppression to α (Burrage et al. 2018). Note: distinct from ATLAS signal strength μ.')
+    ap.add_argument('--use-normalized-slack', action='store_true', default=True,
+                   help='Use normalized slack for dominance comparison (default: True)')
+    ap.add_argument('--no-normalized-slack', dest='use_normalized_slack', action='store_false',
+                   help='Use raw slack instead of normalized slack')
     ap.add_argument('--lambda-regime', type=str, default='sub-nm',
                    choices=['sub-nm', 'micron-to-meter'],
                    help='λ regime: sub-nm (m_φ in MeV-GeV) or micron-to-meter (m_φ ultralight)')
@@ -315,6 +353,10 @@ def main():
         envelope_data = pd.read_csv(args.envelope)
     
     # Compute viable region
+    # Use Theta_lab for differential screening (fifth-force only)
+    # If --Theta is provided (legacy), use it as Theta_lab
+    Theta_lab = args.Theta_lab if hasattr(args, 'Theta_lab') else args.Theta
+    
     summary = compute_viable_region_derived_alpha(
         m_phi_min, m_phi_max, args.n_m_phi,
         args.theta_min, args.theta_max, args.n_theta,
@@ -323,7 +365,11 @@ def main():
         model=args.model,
         rho=args.rho,
         screening=args.screening,
-        Theta=args.Theta,
+        Theta=args.Theta,  # Legacy
+        Theta_lab=Theta_lab,  # Differential screening
+        br_max=args.br_max,
+        use_normalized_slack=args.use_normalized_slack,
+        mu_sb=args.mu_sb,  # Scale breaking mass (distinct from ATLAS signal strength μ)
         output_dir=Path(args.out_dir)
     )
     

@@ -1,0 +1,348 @@
+{
+  "sweep_parameters": {
+    "mu_sb_range": {
+      "min_ratio": 0.0001,
+      "max_ratio": 1.0,
+      "n_points": 25,
+      "values": [
+        0.0001,
+        0.0001467799267622069,
+        0.00021544346900318845,
+        0.00031622776601683794,
+        0.00046415888336127773,
+        0.0006812920690579609,
+        0.001,
+        0.0014677992676220694,
+        0.002154434690031882,
+        0.0031622776601683794,
+        0.004641588833612777,
+        0.006812920690579608,
+        0.01,
+        0.01467799267622069,
+        0.021544346900318822,
+        0.03162277660168379,
+        0.046415888336127774,
+        0.06812920690579607,
+        0.1,
+        0.1467799267622069,
+        0.21544346900318823,
+        0.31622776601683794,
+        0.46415888336127775,
+        0.6812920690579608,
+        1.0
+      ]
+    },
+    "m_phi_range": {
+      "min": 2e-16,
+      "max": 2e-10,
+      "n_points": 50
+    },
+    "theta_range": {
+      "min": 1e-22,
+      "max": 1e-18,
+      "n_points": 50
+    }
+  },
+  "results": [
+    {
+      "mu_sb": 0.0125,
+      "mu_sb_ratio": 0.0001,
+      "log10_mu_sb_ratio": -4.0,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 72.0,
+        "Fifth_force": 28.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.01834749084527586,
+      "mu_sb_ratio": 0.0001467799267622069,
+      "log10_mu_sb_ratio": -3.8333333333333335,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 64.0,
+        "Fifth_force": 36.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.026930433625398556,
+      "mu_sb_ratio": 0.00021544346900318845,
+      "log10_mu_sb_ratio": -3.6666666666666665,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 54.0,
+        "Fifth_force": 46.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.03952847075210474,
+      "mu_sb_ratio": 0.00031622776601683794,
+      "log10_mu_sb_ratio": -3.5,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 46.0,
+        "Fifth_force": 54.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.05801986042015972,
+      "mu_sb_ratio": 0.00046415888336127773,
+      "log10_mu_sb_ratio": -3.3333333333333335,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 38.0,
+        "Fifth_force": 62.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.0851615086322451,
+      "mu_sb_ratio": 0.0006812920690579609,
+      "log10_mu_sb_ratio": -3.166666666666667,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 30.0,
+        "Fifth_force": 70.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.125,
+      "mu_sb_ratio": 0.001,
+      "log10_mu_sb_ratio": -3.0,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 22.0,
+        "Fifth_force": 78.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.18347490845275866,
+      "mu_sb_ratio": 0.0014677992676220694,
+      "log10_mu_sb_ratio": -2.8333333333333335,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 14.0,
+        "Fifth_force": 86.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.26930433625398525,
+      "mu_sb_ratio": 0.002154434690031882,
+      "log10_mu_sb_ratio": -2.666666666666667,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 6.0,
+        "Fifth_force": 94.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.39528470752104744,
+      "mu_sb_ratio": 0.0031622776601683794,
+      "log10_mu_sb_ratio": -2.5,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.5801986042015972,
+      "mu_sb_ratio": 0.004641588833612777,
+      "log10_mu_sb_ratio": -2.3333333333333335,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 0.8516150863224511,
+      "mu_sb_ratio": 0.006812920690579608,
+      "log10_mu_sb_ratio": -2.166666666666667,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 1.25,
+      "mu_sb_ratio": 0.01,
+      "log10_mu_sb_ratio": -2.0,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 1.8347490845275862,
+      "mu_sb_ratio": 0.01467799267622069,
+      "log10_mu_sb_ratio": -1.8333333333333335,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 2.6930433625398527,
+      "mu_sb_ratio": 0.021544346900318822,
+      "log10_mu_sb_ratio": -1.666666666666667,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 3.952847075210474,
+      "mu_sb_ratio": 0.03162277660168379,
+      "log10_mu_sb_ratio": -1.5,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 5.8019860420159715,
+      "mu_sb_ratio": 0.046415888336127774,
+      "log10_mu_sb_ratio": -1.3333333333333335,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 8.51615086322451,
+      "mu_sb_ratio": 0.06812920690579607,
+      "log10_mu_sb_ratio": -1.166666666666667,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 12.5,
+      "mu_sb_ratio": 0.1,
+      "log10_mu_sb_ratio": -1.0,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 0.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 100.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 18.347490845275864,
+      "mu_sb_ratio": 0.1467799267622069,
+      "log10_mu_sb_ratio": -0.8333333333333335,
+      "n_viable": 2500,
+      "constraint_dominance": {
+        "ATLAS_mu": 8.0,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 92.0,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 26.93043362539853,
+      "mu_sb_ratio": 0.21544346900318823,
+      "log10_mu_sb_ratio": -0.666666666666667,
+      "n_viable": 2300,
+      "constraint_dominance": {
+        "ATLAS_mu": 8.695652173913043,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 91.30434782608695,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 39.528470752104745,
+      "mu_sb_ratio": 0.31622776601683794,
+      "log10_mu_sb_ratio": -0.5,
+      "n_viable": 2100,
+      "constraint_dominance": {
+        "ATLAS_mu": 9.523809523809524,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 90.47619047619048,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 58.019860420159716,
+      "mu_sb_ratio": 0.46415888336127775,
+      "log10_mu_sb_ratio": -0.3333333333333335,
+      "n_viable": 1900,
+      "constraint_dominance": {
+        "ATLAS_mu": 10.526315789473685,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 89.47368421052632,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 85.1615086322451,
+      "mu_sb_ratio": 0.6812920690579608,
+      "log10_mu_sb_ratio": -0.16666666666666696,
+      "n_viable": 1700,
+      "constraint_dominance": {
+        "ATLAS_mu": 11.764705882352942,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 88.23529411764706,
+        "QRNG_tilt": 0.0
+      }
+    },
+    {
+      "mu_sb": 125.0,
+      "mu_sb_ratio": 1.0,
+      "log10_mu_sb_ratio": 0.0,
+      "n_viable": 1500,
+      "constraint_dominance": {
+        "ATLAS_mu": 13.333333333333334,
+        "Higgs_inv": 0.0,
+        "Fifth_force": 86.66666666666667,
+        "QRNG_tilt": 0.0
+      }
+    }
+  ]
+}

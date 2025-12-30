@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# -----------------------------
+# Hard block: Restricted topics
+# -----------------------------
+# Case-insensitive keyword/path blocklist
+PATTERN='(amorc|martinist|osti|templar|confraternity|bota|monograph|order materials|vault|restricted|private|dna|genetic|genome|vcf|23andme|ancestry|myheritage|health|medical|patient|phi_private|private_health)'
+
+# -----------------------------
+# Allowlist: public research data paths
+# -----------------------------
+# CSV/TSV/JSONL/ZIP allowed ONLY in these directories:
+ALLOW_DATA_RE='^(data/public/|data/research/|datasets/public/|datasets/research/)'
+
+# Block suspicious personal-data filenames anywhere (even in allowlisted dirs)
+SENSITIVE_NAME_RE='(23andme|ancestry|ancestrydna|myheritage|genomelink|rawdna|raw_dna|genome|genetic|dna|health|medical|patient|fitbit|oura|whoop|apple_health|garmin|prometheus)'
+
+# -----------------------------
+# Hard block: File extensions
+# -----------------------------
+# Documents + genomics formats are ALWAYS blocked
+HARD_EXT_PATTERN='\.(pdf|epub|mobi|azw|docx|pptx|xlsx|vcf|vcf\.gz|bam|bai|cram|fastq|fq|fasta|fa)$'
+
+# Data/archive formats are blocked UNLESS they are in allowlisted public-data paths
+SOFT_EXT_PATTERN='\.(csv|tsv|parquet|jsonl|zip|7z|rar)$'
+
+# -----------------------------
+# Hard block: Large files
+# -----------------------------
+# Block staging files larger than this many bytes (5 MB default)
+MAX_BYTES=$((5 * 1024 * 1024))
+
+# Get staged files (added/copied/modified/renamed)
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR || true)
+
+if [[ -z "${STAGED}" ]]; then
+  exit 0
+fi
+
+echo "${STAGED}" | while IFS= read -r file; do
+  # Skip if file no longer exists in working tree
+  [[ -e "$file" ]] || continue
+
+  # 1) Keyword/path block
+  if echo "$file" | grep -Eiq "$PATTERN"; then
+    echo "❌ Commit blocked: restricted keyword/path detected:"
+    echo "   $file"
+    echo "   (Order materials / DNA / health / private vault content must never be committed.)"
+    exit 1
+  fi
+
+  # 1b) Block suspicious personal-data filenames anywhere
+  base="$(basename "$file")"
+  if echo "$base" | grep -Eiq "$SENSITIVE_NAME_RE"; then
+    echo "❌ Commit blocked: filename looks like personal DNA/health data:"
+    echo "   $file"
+    exit 1
+  fi
+
+  # 2) Extension blocks
+  # 2a) Always-block docs/genomics UNLESS in whitelisted research directories
+  if echo "$file" | grep -Eiq "$HARD_EXT_PATTERN"; then
+    # Allow PDFs in papers/ and docs/ directories (research papers)
+    if echo "$file" | grep -Eiq '\.pdf$'; then
+      if echo "$file" | grep -Eiq '^(papers/|docs/)'; then
+        # Whitelisted: research PDFs in papers/ or docs/
+        continue
+      fi
+    fi
+    echo "❌ Commit blocked: restricted file type detected:"
+    echo "   $file"
+    echo "   (Docs/genomics must stay in local vault, not git. Research PDFs allowed in papers/ or docs/.)"
+    exit 1
+  fi
+
+  # 2b) Conditionally-block data/archive formats unless in allowlisted public-data dirs
+  if echo "$file" | grep -Eiq "$SOFT_EXT_PATTERN"; then
+    if ! echo "$file" | grep -Eiq "$ALLOW_DATA_RE"; then
+      echo "❌ Commit blocked: data/archive file type staged outside allowlisted public-data paths:"
+      echo "   $file"
+      echo "   Allowed paths (example): data/public/, data/research/, datasets/public/, datasets/research/"
+      exit 1
+    fi
+  fi
+
+  # 3) Large file block (size check)
+  # Use byte size from filesystem
+  size=$(wc -c < "$file" | tr -d ' ')
+  if [[ "$size" -gt "$MAX_BYTES" ]]; then
+    echo "❌ Commit blocked: large file staged ($size bytes > $MAX_BYTES bytes):"
+    echo "   $file"
+    echo "   (Use local vault, Git LFS, or a public dataset strategy—never raw personal data.)"
+    exit 1
+  fi
+done
+
+exit 0
+

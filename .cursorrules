@@ -1,0 +1,21 @@
+# PRIVATE_VAULT_SAFETY_RULES
+
+You must treat certain materials as **restricted / non-publishable**.
+These include (but are not limited to): AMORC, Martinist, OSTI, Templar, Confraternity of the Rose Cross, BOTA monographs/manuals, and any related PDFs, scans, mailings, or member-only content.
+
+**Hard rules:**
+
+1. Never paste, quote, paraphrase closely, or reproduce any restricted text verbatim.
+2. Never add restricted materials to git, never commit them, never push them to GitHub.
+3. Never include restricted content in READMEs, docs, issues, PRs, datasets, or training corpora that could be published.
+4. You may only work with **user-authored summaries, user-authored exercises, and high-level concept labels** that do not disclose proprietary text.
+5. Treat any folder named `vault/`, `private/`, `restricted/`, `orders/`, `amorc/`, `martinist/`, `osti/`, `templar/`, `confraternity/`, `bota/`, `dna/`, `genetics/`, `genome/`, `health/`, `medical/`, `phi_private/`, `private_health/` as **PRIVATE** and **OUT OF SCOPE** for publication.
+6. Never commit, paste, or include personal health data, DNA/genetic data, or genetic file formats (VCF, BAM, FASTQ, etc.) in any repository, documentation, or public-facing content.
+7. If asked to integrate ideas from restricted sources, output only:
+
+   * a conceptual outline,
+   * an original exercise written from first principles,
+   * or a "derived insight" clearly marked as the user's own synthesis—never source text.
+
+**If any uncertainty exists about whether content is restricted:** assume it is restricted and refuse to output it. Offer a safe alternative (summary-at-a-distance or user-written notes only).
+

@@ -11,3 +11,9 @@
 __pycache__/
 *.pyc
 
+# Private data (health/biometric data should not be committed)
+private_data/
+*.magnetometer*.csv
+*.biometric*.csv
+*.health*.csv
+

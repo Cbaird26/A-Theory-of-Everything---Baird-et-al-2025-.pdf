@@ -1,0 +1,71 @@
+{
+  "baseline": {
+    "viable_points": 1500,
+    "constraint_dominance": {
+      "ATLAS_mu": 13.333333333333334,
+      "Higgs_inv": 0.0,
+      "Fifth_force": 0.0,
+      "QRNG_tilt": 86.66666666666667
+    }
+  },
+  "qrng_plus_10pct": {
+    "viable_points": 1500,
+    "constraint_dominance": {
+      "ATLAS_mu": 13.333333333333334,
+      "Higgs_inv": 0.0,
+      "Fifth_force": 0.0,
+      "QRNG_tilt": 86.66666666666667
+    }
+  },
+  "qrng_minus_10pct": {
+    "viable_points": 1500,
+    "constraint_dominance": {
+      "ATLAS_mu": 13.333333333333334,
+      "Higgs_inv": 0.0,
+      "Fifth_force": 0.0,
+      "QRNG_tilt": 86.66666666666667
+    }
+  },
+  "atlas_plus_10pct": {
+    "note": "ATLAS \u03bc constraint hardcoded, skipping variation"
+  },
+  "atlas_minus_10pct": {
+    "note": "ATLAS \u03bc constraint hardcoded, skipping variation"
+  },
+  "higgs_plus_10pct": {
+    "viable_points": 1500,
+    "constraint_dominance": {
+      "ATLAS_mu": 13.333333333333334,
+      "Higgs_inv": 0.0,
+      "Fifth_force": 0.0,
+      "QRNG_tilt": 86.66666666666667
+    }
+  },
+  "higgs_minus_10pct": {
+    "viable_points": 1500,
+    "constraint_dominance": {
+      "ATLAS_mu": 13.333333333333334,
+      "Higgs_inv": 0.0,
+      "Fifth_force": 0.0,
+      "QRNG_tilt": 86.66666666666667
+    }
+  },
+  "fifth_force_plus_10pct": {
+    "viable_points": 1500,
+    "constraint_dominance": {
+      "ATLAS_mu": 13.333333333333334,
+      "Higgs_inv": 0.0,
+      "Fifth_force": 0.0,
+      "QRNG_tilt": 86.66666666666667
+    }
+  },
+  "fifth_force_minus_10pct": {
+    "viable_points": 1500,
+    "constraint_dominance": {
+      "ATLAS_mu": 13.333333333333334,
+      "Higgs_inv": 0.0,
+      "Fifth_force": 0.0,
+      "QRNG_tilt": 86.66666666666667
+    }
+  }
+}
