@@ -205,6 +205,8 @@ def write_summary(
         "",
         f"{curve_info}",
         "",
+        "**Note:** Synthetic curves are for plumbing validation only; canonical detectability conclusions require real envelope curves with full provenance.",
+        "",
         "## Statistics",
         "",
         f"Total points computed: {total}",

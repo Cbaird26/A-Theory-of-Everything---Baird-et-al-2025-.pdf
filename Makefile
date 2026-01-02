@@ -116,6 +116,9 @@ fifth-report:
 
 fifth-detectability:
 	@echo "Computing fifth-force detectability map..."
-	python -m code.inference.fifth_force.detectability
+	@if [ -z "$(SEED)" ]; then SEED=42; fi
+	@if [ -z "$(NPTS)" ]; then NPTS=1000; fi
+	python -m code.inference.fifth_force.detectability --seed $(SEED) --n-points $(NPTS)
 	@echo "Detectability summary: results/fifth_force/detectability_summary.md"
+	@echo "  (seed=$(SEED), n_points=$(NPTS))"
 
