@@ -17,6 +17,7 @@ Readers and collaborators should begin with:
 
 - `docs/00_CANONICAL_MAP.md`
 - `docs/MQGT_SCF_Volume_0_Overview.pdf`
+- `docs/constraint_lab_snapshot.md` — Constraint Lab overview
 
 These documents provide orientation, structure, and scope before engaging
 with technical materials.
