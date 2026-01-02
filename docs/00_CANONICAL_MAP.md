@@ -24,3 +24,23 @@ All such extensions are explicitly labeled where they appear and should be
 understood as exploratory research directions rather than settled components
 of the core theory.
 
+---
+
+## QRNG Pipeline (Validated & Contracted)
+
+The QRNG bias-detection pipeline is a calibrated, regression-locked, schema-validated instrument:
+
+- **Start here:** `docs/qrng_start_here.md` — Quick start guide
+- **Calibration certificate:** `docs/qrng_pipeline_validation.md` — Empirical validation on synthetic controls
+- **Data contract:** `docs/qrng_data_contract.md` — Input schema + provenance requirements
+- **Discussion notes:** `docs/notes/qrng_pipeline_validation_discussion.md` — Interpretive discussion (non-canonical)
+- **Engineering plan:** `docs/dev/qrng_regression_lock_plan.md` — Regression lock + data contract implementation
+
+**Key components:**
+- `code/inference/qrng_ingest.py` — Validator + provenance generator
+- `experiments/constraints/scripts/calibrate_qrng_physics.py` — BF10/CI computation + calibration
+- `tests/test_qrng_controls_regression.py` — Regression tests (locks calibration)
+- `tests/test_qrng_ingest_contract.py` — Contract enforcement tests
+
+**Status:** Publication-ready (calibrated, locked, contracted, provenanced)
+

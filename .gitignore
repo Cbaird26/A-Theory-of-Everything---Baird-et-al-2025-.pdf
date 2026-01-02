@@ -17,3 +17,9 @@ private_data/
 *.biometric*.csv
 *.health*.csv
 
+# QRNG processed data and provenance (keep structure, ignore actual data)
+data/processed/*.csv
+results/qrng/*.json
+!results/qrng/.gitkeep
+!data/processed/.gitkeep
+
