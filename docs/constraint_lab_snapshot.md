@@ -100,3 +100,9 @@ All constraint instruments are:
 
 See individual canonical summaries for detailed reproduction instructions.
 
+---
+
+## Milestone Memo
+
+Project milestone record: [`docs/notes/2026-01-01_constraint_lab_milestone.md`](docs/notes/2026-01-01_constraint_lab_milestone.md)
+
