@@ -1,7 +1,7 @@
 # MQGT-SCF Makefile
 # One-command workflows for common tasks
 
-.PHONY: help qrng-validate qrng-ingest qrng-calibrate qrng-mixed
+.PHONY: help qrng-validate qrng-ingest qrng-calibrate qrng-mixed qrng-multisource-validate qrng-multisource-report qrng-dominance-with-multisource fifth-validate fifth-ingest fifth-report fifth-detectability
 
 help:
 	@echo "MQGT-SCF Makefile Targets:"
@@ -11,9 +11,20 @@ help:
 	@echo "  make qrng-ingest INPUT=...      - Validate and ingest QRNG CSV"
 	@echo "  make qrng-calibrate FAIR=... BIASED=... - Run calibration on controls"
 	@echo "  make qrng-mixed MIXED=...       - Run mixed dataset analysis"
+	@echo "  make qrng-multisource-validate - Run multi-source QRNG tests"
+	@echo "  make qrng-multisource-report   - Ingest sources + compute pooled epsilon_max"
+	@echo "  make qrng-dominance-with-multisource - Re-run dominance using pooled epsilon_max"
+	@echo "  make qrng-fetch-nist           - Fetch and cache NIST Beacon v2.0 data"
 	@echo ""
-	@echo "Example:"
+	@echo "Fifth-Force Pipeline:"
+	@echo "  make fifth-validate             - Run fifth-force regression tests"
+	@echo "  make fifth-ingest INPUT=...     - Validate and ingest constraint CSV"
+	@echo "  make fifth-report               - Run full fifth-force analysis pipeline"
+	@echo "  make fifth-detectability        - Compute detectability map (r = alpha_pred/alpha_max)"
+	@echo ""
+	@echo "Examples:"
 	@echo "  make qrng-ingest INPUT=data/raw/my_qrng.csv"
+	@echo "  make fifth-ingest INPUT=data/raw/fifth_force/my_constraint.csv"
 
 # QRNG Pipeline Targets
 
@@ -45,4 +56,66 @@ qrng-mixed:
 	fi
 	@echo "Running mixed dataset analysis..."
 	cd experiments/constraints/scripts && python calibrate_qrng_physics.py --mixed $(MIXED)
+
+# Multi-Source QRNG Pipeline Targets
+
+qrng-multisource-validate:
+	@echo "Running multi-source QRNG regression tests..."
+	python -m pytest -q tests/test_qrng_multisource.py
+
+qrng-multisource-report:
+	@echo "Running multi-source QRNG calibration pipeline..."
+	@echo "1. Ingesting sources from data/raw/qrng_sources/..."
+	python -m code.inference.qrng_multisource_ingest \
+		--raw-dir data/raw/qrng_sources \
+		--processed-dir data/processed \
+		--results-dir results/qrng
+	@echo "2. Computing pooled epsilon_max (both modes)..."
+	python -m code.inference.qrng_pooled_epsilon \
+		--processed-dir data/processed \
+		--results-dir results/qrng \
+		--compute-both-modes
+	@echo "3. Multi-source report complete."
+	@echo "   Summary: results/qrng/multisource_epsilon_summary.md"
+	@echo "   Pooled epsilon_max: results/qrng/multisource_epsilon_max.json"
+
+qrng-dominance-with-multisource:
+	@echo "Re-running dominance analysis with pooled epsilon_max..."
+	@if [ ! -f "results/qrng/multisource_epsilon_max.json" ]; then \
+		echo "Error: Pooled epsilon_max not found. Run 'make qrng-multisource-report' first."; \
+		exit 1; \
+	fi
+	@echo "Using pooled epsilon_max from results/qrng/multisource_epsilon_max.json"
+	@echo "Note: Update your dominance scan script to use --epsilon-max=None to auto-load pooled value"
+	@echo "Or manually pass the value from the JSON file."
+
+qrng-fetch-nist:
+	@echo "Fetching NIST Beacon v2.0 data..."
+	python scripts/fetch_nist_beacon_v2_cache.py --pulses 400 --out data/raw/qrng_sources/nist_beacon_v2_last400.csv
+
+# Fifth-Force Pipeline Targets
+
+fifth-validate:
+	@echo "Running fifth-force regression tests..."
+	python -m pytest -q tests/test_fifth_force_contract.py tests/test_fifth_force_constraints_regression.py tests/test_fifth_force_detectability.py
+
+fifth-ingest:
+	@if [ -z "$(INPUT)" ]; then \
+		echo "Error: INPUT required. Usage: make fifth-ingest INPUT=data/raw/fifth_force/file.csv"; \
+		exit 1; \
+	fi
+	@echo "Ingesting fifth-force constraint data: $(INPUT)"
+	python -m code.inference.fifth_force.ingest $(INPUT)
+
+fifth-report:
+	@echo "Running full fifth-force analysis pipeline..."
+	@echo "1. Validating tests..."
+	@$(MAKE) fifth-validate
+	@echo "2. Analysis complete. See results/fifth_force/ for outputs."
+	@echo "   Summary: docs/fifth_force_summary.md"
+
+fifth-detectability:
+	@echo "Computing fifth-force detectability map..."
+	python -m code.inference.fifth_force.detectability
+	@echo "Detectability summary: results/fifth_force/detectability_summary.md"
 
