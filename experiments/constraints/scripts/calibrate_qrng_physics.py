@@ -5,12 +5,98 @@ Calibrate QRNG_tilt constraint physics.
 Reviews the mapping from (α, λ, η, ...) → predicted bias ε,
 and verifies epsilon_max from experimental data.
 """
+from __future__ import annotations
 import argparse
 import json
+import math
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import numpy as np
+from scipy.special import betaln, betaincinv
+
+
+def bf10_ci(k: int, n: int, prior_scale: float, ci_mass: float = 0.95) -> Tuple[float, float, float]:
+    """
+    Compute Bayes factor BF10 and a credible interval for epsilon = p - 0.5.
+
+    IMPORTANT: This function reuses the existing BF10 + CI logic from analyze_qrng.py.
+    No math changes — only refactor into a pure function.
+
+    Args:
+        k: Number of successes (1s)
+        n: Total number of trials
+        prior_scale: Symmetric Beta prior strength (a = b = prior_scale)
+        ci_mass: Credible interval mass (default 0.95 for 95% CI)
+
+    Returns:
+        (bf10, ci_low, ci_high) for epsilon = p - 0.5
+    """
+    if n <= 0:
+        raise ValueError("n must be positive")
+    if not (0 <= k <= n):
+        raise ValueError("k must be in [0, n]")
+
+    a = prior_scale
+    b = prior_scale
+
+    # log p(D|H0): Binomial likelihood at p=0.5
+    log_p_D_H0 = -n * math.log(2.0)
+
+    # log p(D|H1): Beta-Binomial marginal
+    # log ∫ Bin(k|n,p) Beta(p|a,b) dp = log Beta(k+a, n-k+b) - log Beta(a,b)
+    log_p_D_H1 = betaln(k + a, n - k + b) - betaln(a, b)
+
+    log_BF10 = log_p_D_H1 - log_p_D_H0
+    bf10 = float(math.exp(log_BF10))
+
+    # Posterior Beta parameters: Beta(k + a, n - k + b)
+    post_a = k + a
+    post_b = n - k + b
+
+    # Credible interval for p
+    alpha_tail = (1.0 - ci_mass) / 2.0
+    p_lower = float(betaincinv(post_a, post_b, alpha_tail))
+    p_upper = float(betaincinv(post_a, post_b, 1.0 - alpha_tail))
+
+    # Credible interval for epsilon = p - 0.5
+    ci_low = p_lower - 0.5
+    ci_high = p_upper - 0.5
+
+    return float(bf10), float(ci_low), float(ci_high)
+
+
+def analyze_binomial(k: int, n: int, prior_scale: float = 1.0, ci_mass: float = 0.95) -> Dict[str, float]:
+    """
+    Convenience wrapper used by tests and downstream code.
+
+    Args:
+        k: Number of successes (1s)
+        n: Total number of trials
+        prior_scale: Symmetric Beta prior strength (default 1.0)
+        ci_mass: Credible interval mass (default 0.95)
+
+    Returns:
+        Dictionary with n, k, p_hat, epsilon_hat, bf10, ci_low, ci_high
+    """
+    if n <= 0:
+        raise ValueError("n must be positive")
+    if not (0 <= k <= n):
+        raise ValueError("k must be in [0, n]")
+
+    p_hat = k / n
+    epsilon_hat = p_hat - 0.5
+    bf10, ci_low, ci_high = bf10_ci(k, n, prior_scale, ci_mass)
+
+    return {
+        "n": float(n),
+        "k": float(k),
+        "p_hat": float(p_hat),
+        "epsilon_hat": float(epsilon_hat),
+        "bf10": float(bf10),
+        "ci_low": float(ci_low),
+        "ci_high": float(ci_high),
+    }
 
 
 def load_qrng_data(qrng_json_path: Path) -> Optional[Dict]:
