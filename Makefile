@@ -1,7 +1,7 @@
 # MQGT-SCF Makefile
 # One-command workflows for common tasks
 
-.PHONY: help qrng-validate qrng-ingest qrng-calibrate qrng-mixed qrng-multisource-validate qrng-multisource-report qrng-dominance-with-multisource fifth-validate fifth-ingest fifth-report fifth-detectability
+.PHONY: help qrng-validate qrng-ingest qrng-calibrate qrng-mixed qrng-multisource-validate qrng-multisource-report qrng-dominance-with-multisource fifth-validate fifth-ingest fifth-report fifth-detectability fifth-fetch-zenodo5080965
 
 help:
 	@echo "MQGT-SCF Makefile Targets:"
@@ -21,6 +21,7 @@ help:
 	@echo "  make fifth-ingest INPUT=...     - Validate and ingest constraint CSV"
 	@echo "  make fifth-report               - Run full fifth-force analysis pipeline"
 	@echo "  make fifth-detectability        - Compute detectability map (r = alpha_pred/alpha_max)"
+	@echo "  make fifth-fetch-zenodo5080965  - Fetch and ingest Zenodo 5080965 Fig3 curve"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make qrng-ingest INPUT=data/raw/my_qrng.csv"
@@ -121,4 +122,9 @@ fifth-detectability:
 	python -m code.inference.fifth_force.detectability --seed $(SEED) --n-points $(NPTS)
 	@echo "Detectability summary: results/fifth_force/detectability_summary.md"
 	@echo "  (seed=$(SEED), n_points=$(NPTS))"
+
+fifth-fetch-zenodo5080965:
+	@echo "Fetching Zenodo 5080965 Fig3 curve..."
+	python -m code.inference.fifth_force.importers.zenodo5080965_fig3
+	@echo "✅ Zenodo curve ingested. Validated CSV: data/processed/zenodo5080965_fig3_validated.csv"
 

@@ -160,9 +160,17 @@ def write_summary(
         curves = list_curves()
     
     curve_info = "Envelope (tightest bound across all curves)"
+    curve_paths = []
     if curves:
         curve_ids = [c["source_id"] for c in curves]
+        curve_paths = [str(c["path"]) for c in curves]
         curve_info = f"Envelope across: {', '.join(curve_ids)}"
+        if len(curve_paths) == 1:
+            curve_info += f"\n\nCurve used: {curve_ids[0]} ({curve_paths[0]})"
+        else:
+            curve_info += f"\n\nCurves used: {len(curve_ids)} curves"
+            for cid, cpath in zip(curve_ids, curve_paths):
+                curve_info += f"\n  - {cid}: {cpath}"
     
     # Compute statistics
     total = len(df)
