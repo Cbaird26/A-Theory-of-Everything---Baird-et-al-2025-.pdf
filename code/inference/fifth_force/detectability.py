@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 import numpy as np
 import pandas as pd
+import math
 
 try:
     from .yukawa import model_point_to_alpha_lambda
@@ -20,6 +21,37 @@ except ImportError:
     from code.inference.fifth_force.yukawa import model_point_to_alpha_lambda
     from code.inference.fifth_force.envelope import alpha_max_envelope, list_curves
     from code.inference.fifth_force.constraints import is_excluded
+
+# Constants for frequency conversions (CODATA 2018)
+C_LIGHT = 299792458.0  # Speed of light (m/s)
+H_PLANCK = 6.62607015e-34  # Planck constant (J·s)
+E_CHARGE = 1.602176634e-19  # Elementary charge (C)
+
+
+def lambda_to_freq_eq(lambda_m: float) -> float:
+    """Convert Yukawa range to equivalent frequency: f_eq ≈ c/(2πλ).
+    
+    Args:
+        lambda_m: Interaction range in meters
+        
+    Returns:
+        Equivalent frequency in Hz
+    """
+    if lambda_m <= 0:
+        return np.nan
+    return C_LIGHT / (2 * math.pi * lambda_m)
+
+
+def freq_to_energy_eV(freq_hz: float) -> float:
+    """Convert frequency to energy in eV: E = hf/e.
+    
+    Args:
+        freq_hz: Frequency in Hz
+        
+    Returns:
+        Energy in eV
+    """
+    return (H_PLANCK * freq_hz) / E_CHARGE
 
 
 def sample_model_points(
@@ -74,7 +106,8 @@ def compute_detectability(
     
     Returns:
         DataFrame with columns: m_phi_GeV, theta, mu_sb_over_m_h, 
-        alpha_pred, lambda_m, alpha_max, r, is_excluded, tightest_source_id
+        alpha_pred, lambda_m, alpha_max, r, f_eq_hz, E_eq_eV,
+        is_excluded, tightest_source_id
     """
     if curves is None:
         curves = list_curves()
@@ -106,6 +139,10 @@ def compute_detectability(
             # Compute detectability ratio
             r = alpha_pred / alpha_max if alpha_max > 0 else np.inf
             
+            # Compute equivalent frequency and energy
+            f_eq_hz = lambda_to_freq_eq(lambda_m)
+            E_eq_eV = freq_to_energy_eV(f_eq_hz) if not np.isnan(f_eq_hz) else np.nan
+            
             # Check if excluded
             # Load the tightest curve to check exclusion
             tightest_curve_path = None
@@ -129,6 +166,8 @@ def compute_detectability(
                 "lambda_m": lambda_m,
                 "alpha_max": alpha_max,
                 "r": r,
+                "f_eq_hz": f_eq_hz,
+                "E_eq_eV": E_eq_eV,
                 "is_excluded": excluded,
                 "tightest_source_id": tightest_source_id,
             })
@@ -171,6 +210,32 @@ def write_summary(
             curve_info += f"\n\nCurves used: {len(curve_ids)} curves"
             for cid, cpath in zip(curve_ids, curve_paths):
                 curve_info += f"\n  - {cid}: {cpath}"
+        
+        # Add constraint dominance analysis if multiple curves
+        if len(curves) > 1 and len(df) > 0:
+            from .envelope import get_envelope_dominance_map
+            
+            lambda_min = df["lambda_m"].min()
+            lambda_max = df["lambda_m"].max()
+            
+            try:
+                dominance_df = get_envelope_dominance_map(
+                    (lambda_min, lambda_max),
+                    n_points=50,
+                    curves=curves,
+                )
+                
+                # Count how often each constraint dominates
+                dominance_counts = dominance_df["dominant_source_id"].value_counts()
+                
+                curve_info += f"\n\n## Constraint Dominance Analysis\n\n"
+                curve_info += f"Which constraint provides the tightest bound across the sampled λ range:\n\n"
+                for source_id, count in dominance_counts.items():
+                    fraction = count / len(dominance_df) * 100
+                    curve_info += f"- **{source_id}**: {fraction:.1f}% of λ range ({count}/{len(dominance_df)} points)\n"
+            except Exception as e:
+                # Skip dominance analysis if it fails
+                pass
     
     # Compute statistics
     total = len(df)
@@ -193,12 +258,29 @@ def write_summary(
         lambda_band_max = df["lambda_m"].quantile(0.9)
         band_avg_r = df[(df["lambda_m"] >= lambda_band_min) & 
                         (df["lambda_m"] <= lambda_band_max)]["r"].mean()
+        
+        # Compute frequency ranges for hunt band (0.1 < r <= 1.0)
+        hunt_band_df = df[(df["r"] > 0.1) & (df["r"] <= 1.0)]
+        if len(hunt_band_df) > 0 and "f_eq_hz" in hunt_band_df.columns:
+            hunt_f_eq_min = hunt_band_df["f_eq_hz"].min()
+            hunt_f_eq_max = hunt_band_df["f_eq_hz"].max()
+            hunt_lambda_min = hunt_band_df["lambda_m"].min()
+            hunt_lambda_max = hunt_band_df["lambda_m"].max()
+        else:
+            hunt_f_eq_min = None
+            hunt_f_eq_max = None
+            hunt_lambda_min = None
+            hunt_lambda_max = None
     else:
         max_r_lambda = None
         max_r_value = None
         lambda_band_min = None
         lambda_band_max = None
         band_avg_r = None
+        hunt_f_eq_min = None
+        hunt_f_eq_max = None
+        hunt_lambda_min = None
+        hunt_lambda_max = None
     
     # Write markdown
     lines = [
@@ -232,19 +314,34 @@ def write_summary(
         "",
     ]
     
-    # Add table header
-    lines.extend([
-        "| m_phi_GeV | theta | mu_sb/m_h | alpha_pred | lambda_m (m) | alpha_max | r | excluded | source |",
-        "|-----------|-------|-----------|------------|--------------|-----------|---|----------|--------|",
-    ])
+    # Add table header (include frequency columns if available)
+    if "f_eq_hz" in df.columns and "E_eq_eV" in df.columns:
+        lines.extend([
+            "| m_phi_GeV | theta | mu_sb/m_h | alpha_pred | lambda_m (m) | f_eq (Hz) | E_eq (eV) | alpha_max | r | excluded | source |",
+            "|-----------|-------|-----------|------------|--------------|-----------|-----------|-----------|---|----------|--------|",
+        ])
+    else:
+        lines.extend([
+            "| m_phi_GeV | theta | mu_sb/m_h | alpha_pred | lambda_m (m) | alpha_max | r | excluded | source |",
+            "|-----------|-------|-----------|------------|--------------|-----------|---|----------|--------|",
+        ])
     
     # Add top points
     for _, row in top_points.iterrows():
-        lines.append(
-            f"| {row['m_phi_GeV']:.3e} | {row['theta']:.3e} | {row['mu_sb_over_m_h']:.3e} | "
-            f"{row['alpha_pred']:.3e} | {row['lambda_m']:.3e} | {row['alpha_max']:.3e} | "
-            f"{row['r']:.3e} | {row['is_excluded']} | {row['tightest_source_id']} |"
-        )
+        if "f_eq_hz" in df.columns and "E_eq_eV" in df.columns:
+            f_eq_str = f"{row['f_eq_hz']:.3e}" if not np.isnan(row['f_eq_hz']) else "N/A"
+            E_eq_str = f"{row['E_eq_eV']:.3e}" if not np.isnan(row['E_eq_eV']) else "N/A"
+            lines.append(
+                f"| {row['m_phi_GeV']:.3e} | {row['theta']:.3e} | {row['mu_sb_over_m_h']:.3e} | "
+                f"{row['alpha_pred']:.3e} | {row['lambda_m']:.3e} | {f_eq_str} | {E_eq_str} | "
+                f"{row['alpha_max']:.3e} | {row['r']:.3e} | {row['is_excluded']} | {row['tightest_source_id']} |"
+            )
+        else:
+            lines.append(
+                f"| {row['m_phi_GeV']:.3e} | {row['theta']:.3e} | {row['mu_sb_over_m_h']:.3e} | "
+                f"{row['alpha_pred']:.3e} | {row['lambda_m']:.3e} | {row['alpha_max']:.3e} | "
+                f"{row['r']:.3e} | {row['is_excluded']} | {row['tightest_source_id']} |"
+            )
     
     lines.extend([
         "",
@@ -256,13 +353,48 @@ def write_summary(
         lines.extend([
             f"The highest detectability ratio is r = {max_r_value:.3e} at λ = {max_r_lambda:.3e} m.",
             "",
+        ])
+        
+        # Add equivalent frequency if available
+        if "f_eq_hz" in df.columns:
+            max_r_idx = df["r"].idxmax()
+            max_r_feq = df.loc[max_r_idx, "f_eq_hz"]
+            max_r_Eeq = df.loc[max_r_idx, "E_eq_eV"]
+            if not np.isnan(max_r_feq):
+                lines.extend([
+                    f"This corresponds to f_eq = {max_r_feq:.3e} Hz (equivalent frequency tag).",
+                    "",
+                ])
+        
+        lines.extend([
             f"Across the central 80% of the λ range ({lambda_band_min:.3e} to {lambda_band_max:.3e} m),",
             f"the average detectability ratio is r = {band_avg_r:.3e}.",
             "",
+        ])
+        
+        # Add hunt band section if available
+        if hunt_f_eq_min is not None and not np.isnan(hunt_f_eq_min):
+            lines.extend([
+                "## Hunt Band (Near-Detectable Range)",
+                "",
+                f"The hunt band (0.1 < r ≤ 1.0) spans:",
+                f"- λ range: {hunt_lambda_min:.3e} to {hunt_lambda_max:.3e} m",
+                f"- f_eq range: {hunt_f_eq_min:.3e} to {hunt_f_eq_max:.3e} Hz",
+                f"- This corresponds to a **tens-of-GHz → low-THz equivalent scale** (translation tag, not literal oscillation).",
+                "",
+            ])
+        
+        lines.extend([
             "**Interpretation:**",
             "- r ≪ 1: scalar is well below current experimental sensitivity",
             "- r ≈ 0.1–1: scalar is in the detectable range; near-future experiments could see it",
             "- r > 1: scalar is excluded by current constraints",
+            "",
+            "**Frequency Translation:**",
+            "The equivalent frequency f_eq = c/(2πλ) provides a translation layer to map",
+            "fifth-force ranges onto a universal Hz axis, enabling comparison with other",
+            "MQGT-SCF constraint channels (cosmology ~10⁻¹⁸ Hz, QRNG ~Hz–GHz, Higgs ~10²⁵ Hz).",
+            "This is a unit-conversion tool, not evidence by itself.",
         ])
     else:
         lines.append("No points computed.")

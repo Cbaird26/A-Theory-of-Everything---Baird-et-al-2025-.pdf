@@ -8,6 +8,8 @@ from pathlib import Path
 from code.inference.fifth_force.detectability import (
     sample_model_points,
     compute_detectability,
+    lambda_to_freq_eq,
+    freq_to_energy_eV,
 )
 from code.inference.fifth_force.yukawa import model_point_to_alpha_lambda
 from code.inference.fifth_force.envelope import alpha_max_envelope
@@ -162,4 +164,62 @@ def test_detectability_handles_out_of_range(synthetic_curve):
     # Should either skip the point or handle it gracefully
     # (no exception should be raised)
     assert isinstance(df, pd.DataFrame)
+
+
+def test_detectability_includes_frequency_columns(synthetic_curve):
+    """Test that detectability output includes f_eq_hz and E_eq_eV columns."""
+    points = [{
+        "m_phi_GeV": 1e-14,  # Will give lambda in range
+        "theta": 1e-20,
+        "mu_sb_over_m_h": 0.01,
+    }]
+    
+    df = compute_detectability(points, [synthetic_curve])
+    
+    if len(df) > 0:
+        # Check that frequency columns are present
+        assert "f_eq_hz" in df.columns, "f_eq_hz column missing"
+        assert "E_eq_eV" in df.columns, "E_eq_eV column missing"
+        
+        # Check that values are computed correctly
+        for _, row in df.iterrows():
+            lambda_m = row["lambda_m"]
+            f_eq = row["f_eq_hz"]
+            E_eq = row["E_eq_eV"]
+            
+            # Verify frequency calculation
+            expected_f_eq = lambda_to_freq_eq(lambda_m)
+            if not np.isnan(expected_f_eq):
+                assert not np.isnan(f_eq), f"f_eq_hz is NaN for lambda_m={lambda_m}"
+                assert abs(f_eq - expected_f_eq) < 1e-6 * abs(f_eq), \
+                    f"f_eq mismatch: got {f_eq}, expected {expected_f_eq}"
+            
+            # Verify energy calculation
+            expected_E_eq = freq_to_energy_eV(f_eq) if not np.isnan(f_eq) else np.nan
+            if not np.isnan(expected_E_eq):
+                assert not np.isnan(E_eq), f"E_eq_eV is NaN for f_eq={f_eq}"
+                assert abs(E_eq - expected_E_eq) < 1e-12 * abs(E_eq), \
+                    f"E_eq mismatch: got {E_eq}, expected {expected_E_eq}"
+
+
+def test_detectability_frequency_values_positive(synthetic_curve):
+    """Test that frequency values are positive for valid lambda."""
+    points = [{
+        "m_phi_GeV": 1e-14,
+        "theta": 1e-20,
+        "mu_sb_over_m_h": 0.01,
+    }]
+    
+    df = compute_detectability(points, [synthetic_curve])
+    
+    if len(df) > 0:
+        for _, row in df.iterrows():
+            lambda_m = row["lambda_m"]
+            f_eq = row["f_eq_hz"]
+            E_eq = row["E_eq_eV"]
+            
+            # For valid lambda (positive), frequency should be positive
+            if lambda_m > 0:
+                assert f_eq > 0, f"f_eq should be positive for lambda_m={lambda_m}, got {f_eq}"
+                assert E_eq > 0, f"E_eq should be positive for f_eq={f_eq}, got {E_eq}"
 

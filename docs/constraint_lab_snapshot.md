@@ -9,6 +9,8 @@
 
 This document provides a one-page overview of the constraint evaluation instruments in the MQGT-SCF repository. It summarizes instrument status, current dominance results, and links to detailed canonical summaries.
 
+**Scale span:** The constraint channels span ~43–60 orders of magnitude in equivalent frequency/energy scales, from cosmic expansion (~10⁻¹⁸ Hz) to Higgs physics (~10²⁵ Hz). Fifth-force constraints alone span ~16 orders of magnitude (from solar-system scales: Bennu/OSIRIS-REx at f_eq ~ 10⁻⁴ Hz, λ ~ AU, to sub-mm lab tests at f_eq ~ 10¹² Hz, λ ~ μm–mm). See [`docs/frequency_atlas.md`](docs/frequency_atlas.md) for the full frequency ladder and MQGT-SCF channel mapping (including extended fifth-force, atomic spectroscopy, and cosmological constraints).
+
 ---
 
 ## QRNG Instrument Status
@@ -101,6 +103,11 @@ All constraint instruments are:
 See individual canonical summaries for detailed reproduction instructions.
 
 ---
+
+## Related Documents
+
+- [`docs/frequency_atlas.md`](docs/frequency_atlas.md) - Frequency ladder and scale conversion tools
+- [`docs/fifth_force_detectability_summary.md`](docs/fifth_force_detectability_summary.md) - Scalar hunt band analysis
 
 ## Milestone Memo
 

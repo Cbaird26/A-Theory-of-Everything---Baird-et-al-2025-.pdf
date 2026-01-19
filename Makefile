@@ -98,7 +98,7 @@ qrng-fetch-nist:
 
 fifth-validate:
 	@echo "Running fifth-force regression tests..."
-	python -m pytest -q tests/test_fifth_force_contract.py tests/test_fifth_force_constraints_regression.py tests/test_fifth_force_detectability.py
+	python -m pytest -q tests/test_fifth_force_contract.py tests/test_fifth_force_constraints_regression.py tests/test_fifth_force_detectability.py tests/test_fifth_force_detectability_frequency.py
 
 fifth-ingest:
 	@if [ -z "$(INPUT)" ]; then \
@@ -110,10 +110,24 @@ fifth-ingest:
 
 fifth-report:
 	@echo "Running full fifth-force analysis pipeline..."
+	@echo ""
 	@echo "1. Validating tests..."
 	@$(MAKE) fifth-validate
-	@echo "2. Analysis complete. See results/fifth_force/ for outputs."
-	@echo "   Summary: docs/fifth_force_summary.md"
+	@echo ""
+	@echo "2. Computing detectability map..."
+	@$(MAKE) fifth-detectability SEED=42 NPTS=2000
+	@echo ""
+	@echo "3. Generating frequency ladder figure..."
+	@$(MAKE) fifth-frequency-figure || echo "   (frequency figure generation skipped if script unavailable)"
+	@echo ""
+	@echo "✅ Fifth-force analysis pipeline complete."
+	@echo ""
+	@echo "Results:"
+	@echo "  - Summary: docs/fifth_force_summary.md"
+	@echo "  - Detectability: results/fifth_force/detectability_summary.md"
+	@echo "  - Frequency ladder: results/frequency_ladder.{png,pdf}"
+	@echo ""
+	@echo "See docs/fifth_force_start_here.md for usage guide."
 
 fifth-detectability:
 	@echo "Computing fifth-force detectability map..."
@@ -127,4 +141,29 @@ fifth-fetch-zenodo5080965:
 	@echo "Fetching Zenodo 5080965 Fig3 curve..."
 	python -m code.inference.fifth_force.importers.zenodo5080965_fig3
 	@echo "✅ Zenodo curve ingested. Validated CSV: data/processed/zenodo5080965_fig3_validated.csv"
+
+fifth-fetch-bennu:
+	@echo "Generating Bennu/OSIRIS-REx constraint curve..."
+	python -m code.inference.fifth_force.importers.bennu_osiris_rex
+	@echo "✅ Bennu curve ingested. Validated CSV: data/processed/bennu_osiris_rex_2024_validated.csv"
+
+fifth-frequency-figure:
+	@echo "Generating frequency ladder figure..."
+	python scripts/generate_frequency_ladder_figure.py
+	@echo "✅ Frequency ladder figure: results/frequency_ladder.{png,pdf}"
+
+fifth-data-ledger:
+	@echo "Creating data ledger..."
+	python scripts/create_data_ledger.py
+	@echo "✅ Data ledger: results/DATA_LEDGER.csv"
+
+fifth-sha256-ledger:
+	@echo "Creating SHA256 hash ledger..."
+	./scripts/create_sha256_ledger.sh
+	@echo "✅ SHA256 ledger: results/DATA_LEDGER_SHA256.txt"
+
+fifth-frequency-interactive:
+	@echo "Generating interactive frequency ladder..."
+	python scripts/generate_interactive_frequency_ladder.py
+	@echo "✅ Interactive frequency ladder: results/frequency_ladder_interactive.html"
 

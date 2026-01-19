@@ -19,7 +19,17 @@ private_data/
 
 # QRNG processed data and provenance (keep structure, ignore actual data)
 data/processed/*.csv
+data/processed/qrng_sources/*.csv
 results/qrng/*.json
+results/qrng/provenance/*.json
 !results/qrng/.gitkeep
+!results/qrng/provenance/.gitkeep
 !data/processed/.gitkeep
+!data/processed/qrng_sources/.gitkeep
+!data/raw/qrng_sources/.gitkeep
+
+# Fifth-force processed data and provenance (keep structure, ignore actual data)
+results/fifth_force/*.json
+!results/fifth_force/.gitkeep
+!data/raw/fifth_force/.gitkeep
 

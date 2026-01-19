@@ -44,3 +44,25 @@ The QRNG bias-detection pipeline is a calibrated, regression-locked, schema-vali
 
 **Status:** Publication-ready (calibrated, locked, contracted, provenanced)
 
+---
+
+## Fifth-Force Constraint Pipeline (Validated & Contracted)
+
+The fifth-force constraint pipeline is a calibrated, regression-locked, schema-validated instrument:
+
+- **Start here:** `docs/fifth_force_start_here.md` — Quick start guide
+- **Results summary:** `docs/fifth_force_summary.md` — Constraint dominance analysis
+- **Data contract:** `docs/fifth_force_data_contract.md` — Input schema + provenance requirements
+- **Mapping audit:** `docs/dev/fifth_force_mapping_audit.md` — Physics mapping documentation
+
+**Key components:**
+- `code/inference/fifth_force/ingest.py` — Validator + provenance generator
+- `code/inference/fifth_force/constraints.py` — Constraint evaluation
+- `code/inference/fifth_force/yukawa.py` — Model-to-Yukawa mapping
+- `code/inference/fifth_force/slack.py` — Slack computation
+- `code/inference/fifth_force/envelope.py` — Multi-curve envelope
+- `tests/test_fifth_force_contract.py` — Contract enforcement tests
+- `tests/test_fifth_force_constraints_regression.py` — Constraint evaluation regression tests
+
+**Status:** Publication-ready (contracted, validated, regression-locked, provenanced)
+
