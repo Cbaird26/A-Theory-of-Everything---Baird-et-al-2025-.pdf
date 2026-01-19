@@ -198,6 +198,8 @@ def main():
     ap.add_argument("--data-dir", type=str, default="data/raw", help="Directory with raw QRNG logs")
     ap.add_argument("--out-dir", type=str, default="results", help="Output directory")
     ap.add_argument("--prior", type=float, default=1.0, help="Symmetric Beta prior strength for bias test")
+    ap.add_argument("--frequency-analysis", action="store_true", help="Run frequency-domain analysis (PSD, line noise, periodicity)")
+    ap.add_argument("--sampling-rate", type=float, default=1.0, help="Sampling rate in Hz for frequency analysis (default: 1.0)")
     args = ap.parse_args()
 
     data_dir = Path(args.data_dir)
@@ -230,6 +232,26 @@ def main():
         plt.tight_layout()
         plt.savefig(out_dir / f"{p.stem}_cumulative_epsilon.png", dpi=200)
         plt.close()
+        
+        # Frequency-domain analysis (if requested)
+        if args.frequency_analysis:
+            try:
+                import sys
+                from pathlib import Path
+                # Add project root to path
+                project_root = Path(__file__).parent.parent.parent.parent
+                sys.path.insert(0, str(project_root))
+                from code.inference.qrng.visualize_frequency import generate_frequency_analysis_report
+                
+                freq_out_dir = out_dir / "frequency_analysis"
+                generate_frequency_analysis_report(
+                    bits,
+                    freq_out_dir,
+                    source_id=p.stem,
+                    sampling_rate=args.sampling_rate,
+                )
+            except Exception as e:
+                print(f"Warning: Frequency analysis failed for {p.name}: {e}")
 
     res = pd.DataFrame(all_rows)
     res.to_csv(out_dir / "summary.csv", index=False)
