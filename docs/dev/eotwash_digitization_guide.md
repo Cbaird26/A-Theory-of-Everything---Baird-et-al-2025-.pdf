@@ -41,7 +41,20 @@ The curve represents the **upper limit** α_max(λ) — points above the curve a
 - Works in browser
 - Handles log-scale axes correctly
 
+**Visual Guide:** See [`docs/dev/digitization_visuals/eotwash_webplotdigitizer_guide.png`](digitization_visuals/eotwash_webplotdigitizer_guide.png) for screenshot with guidance overlays showing which curve to digitize.
+
 ---
+
+## Visual Documentation
+
+**Digitization Process Visuals:**
+- **Raw vs. Monotone Comparison:** [`docs/dev/digitization_visuals/eotwash_raw_vs_monotone.png`](digitization_visuals/eotwash_raw_vs_monotone.png)
+  - Shows raw digitized data (blue) vs. monotone conservative version (orange)
+  - Demonstrates why monotone processing prevents fake-tight exclusions
+
+- **WebPlotDigitizer Guidance:** [`docs/dev/digitization_visuals/eotwash_webplotdigitizer_guide.png`](digitization_visuals/eotwash_webplotdigitizer_guide.png)
+  - Screenshot with orange overlays showing which curve to digitize
+  - Emphasizes avoiding text labels and other non-data elements
 
 ## Step-by-Step Instructions
 

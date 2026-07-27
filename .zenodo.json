@@ -1,0 +1,32 @@
+{
+  "title": "MQGT-SCF: Reproducible constraint lab for operational tests of a parameterized measurement deformation",
+  "description": "MQGT-SCF is an open, reproducible constraint-lab pipeline that maps a parameterized operational hypothesis into observables and pressure-tests it against public experimental constraints across multiple channels. This release artifact includes code, scripts, and versioned outputs sufficient to reproduce the included tables/figures.",
+  "upload_type": "software",
+  "license": "CC-BY-4.0",
+  "creators": [
+    {
+      "name": "Baird, Christopher M.",
+      "affiliation": "Independent"
+    }
+  ],
+  "keywords": [
+    "reproducibility",
+    "constraints",
+    "fifth force",
+    "quantum measurement",
+    "open science",
+    "effective field theory",
+    "consciousness",
+    "ethics",
+    "constraint analysis",
+    "quantum random number generator"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/Cbaird26/MQGT-SCF",
+      "scheme": "url"
+    }
+  ],
+  "notes": "This is a constraint lab for testing a parameterized hypothesis class. It does not claim confirmation of new physics; it provides an auditable instrument intended to be inspected, replicated, and falsified."
+}

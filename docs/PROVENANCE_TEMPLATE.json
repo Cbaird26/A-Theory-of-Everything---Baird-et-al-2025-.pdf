@@ -1,0 +1,16 @@
+{
+  "filename": "example_dataset.csv",
+  "sha256": "<SHA256_HASH>",
+  "rows": 0,
+  "time_min": null,
+  "time_max": null,
+  "source_counts": {},
+  "source_id": "example_source",
+  "ref": "Example reference",
+  "digitization_method": "WebPlotDigitizer",
+  "digitization_date": "<YYYY-MM-DD>",
+  "plot_source": "Figure X from Paper Y",
+  "warnings": [],
+  "created": "<TIMESTAMP>"
+}
+

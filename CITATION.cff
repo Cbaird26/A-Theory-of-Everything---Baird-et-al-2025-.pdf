@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+title: "Merged Quantum Gauge and Scalar Consciousness Framework (MQGT-SCF)"
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Baird"
+    given-names: "Christopher M."
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+version: "1.4.0"
+date-released: "2026-01-20"
+repository-code: "https://github.com/Cbaird26/MQGT-SCF"
+license: "CC-BY-4.0"
+license-url: "https://creativecommons.org/licenses/by/4.0/"
+keywords:
+  - "quantum physics"
+  - "effective field theory"
+  - "consciousness"
+  - "ethics"
+  - "constraint analysis"
+  - "fifth force"
+  - "quantum random number generator"
+abstract: "An effective field theory extension of the Standard Model and General Relativity incorporating scalar fields for consciousness and ethical weighting, with operational constraints tested across multiple experimental channels (QRNG, fifth-force, Higgs portals, cosmology)."

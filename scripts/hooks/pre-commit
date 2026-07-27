@@ -8,6 +8,22 @@ set -euo pipefail
 PATTERN='(amorc|martinist|osti|templar|confraternity|bota|monograph|order materials|vault|restricted|private|dna|genetic|genome|vcf|23andme|ancestry|myheritage|health|medical|patient|phi_private|private_health)'
 
 # -----------------------------
+# Secret detection patterns
+# -----------------------------
+# Common secret patterns to detect
+SECRET_PATTERNS=(
+    'API[_-]?KEY\s*[=:]\s*["\047]?[A-Za-z0-9]{20,}'
+    'SECRET[_-]?KEY\s*[=:]\s*["\047]?[A-Za-z0-9]{20,}'
+    'TOKEN\s*[=:]\s*["\047]?[A-Za-z0-9]{20,}'
+    'PASSWORD\s*[=:]\s*["\047]?[^"\047\n]{8,}'
+    'password\s*[=:]\s*["\047]?[^"\047\n]{8,}'
+    'BEGIN\s+(RSA|DSA|EC|OPENSSH)\s+PRIVATE\s+KEY'
+    'ssh-rsa\s+[A-Za-z0-9+/]{100,}'
+    'aws_access_key_id\s*[=:]\s*[A-Z0-9]{20}'
+    'aws_secret_access_key\s*[=:]\s*[A-Za-z0-9/+=]{40}'
+)
+
+# -----------------------------
 # Allowlist: public research data paths
 # -----------------------------
 # CSV/TSV/JSONL/ZIP allowed ONLY in these directories:
@@ -92,6 +108,20 @@ echo "${STAGED}" | while IFS= read -r file; do
     echo "   $file"
     echo "   (Use local vault, Git LFS, or a public dataset strategy—never raw personal data.)"
     exit 1
+  fi
+
+  # 4) Secret detection (check file contents)
+  # Skip binary files and very large files for performance
+  if [[ "$size" -lt 1048576 ]] && file "$file" | grep -qiE "(text|ascii|utf-8|empty)"; then
+    for pattern in "${SECRET_PATTERNS[@]}"; do
+      if grep -qiE "$pattern" "$file" 2>/dev/null; then
+        echo "❌ Commit blocked: potential secret detected:"
+        echo "   $file"
+        echo "   Pattern matched: $pattern"
+        echo "   (Remove secrets before committing. Use environment variables or secret management.)"
+        exit 1
+      fi
+    done
   fi
 done
 

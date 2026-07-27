@@ -4,6 +4,19 @@ import sys
 from pathlib import Path
 import importlib.util
 
+# Import ToE-native mapping functions
+try:
+    from .toe_mapping import (
+        toe_theta_hc,
+        toe_alpha_from_theta,
+        lambda_to_mphi_GeV,
+    )
+except ImportError:
+    # Fallback if toe_mapping not available
+    toe_theta_hc = None
+    toe_alpha_from_theta = None
+    lambda_to_mphi_GeV = None
+
 # Try to import derive_alpha functions from experiments/constraints/scripts
 _derive_module = None
 _scripts_path = Path(__file__).parent.parent.parent.parent / "experiments" / "constraints" / "scripts"
@@ -53,21 +66,43 @@ def mass_eV_to_lambda_m(m_eV: float) -> float:
     return lambda_m
 
 
-def model_point_to_alpha_lambda(model: dict) -> tuple[float, float]:
+def model_point_to_alpha_lambda(
+    model: dict,
+    mode: str = "A",
+    kappa: float = 1.0,
+    s_ff: float = 1.0,
+    s_lambda: float = 1.0,
+) -> tuple[float, float]:
     """Map a model point to (alpha_pred, lambda_m) for fifth-force evaluation.
 
     Args:
         model: Dictionary with keys:
-            - m_phi (or m_phi_eV): scalar mass in GeV (or eV)
-            - theta: mixing angle
-            - mu_sb (optional): scale-breaking mass in GeV
-            - Theta_lab (optional): screening factor
-            - model (optional): model variant string
+            - For modes A/B/C:
+                - m_phi (or m_phi_eV): scalar mass in GeV (or eV)
+                - theta: mixing angle
+                - mu_sb (optional): scale-breaking mass in GeV
+                - Theta_lab (optional): screening factor
+            - For mode D (ToE-native):
+                - kappa_cH: portal coupling constant (dimensionless)
+                - v_c_GeV: scalar VEV in GeV
+                - m_c_GeV (or m_phi/m_phi_eV): scalar mass in GeV (or eV)
+                - OR theta: mixing angle (for backward compatibility)
+                - f_n (optional): nucleon scalar form factor (default: 0.30)
+        mode: Mapping mode - "A" (placeholder), "B" (portal-proxy), "C" (agnostic scaling), "D" (ToE-native)
+        kappa: Portal coupling factor for mode B (default: 1.0)
+        s_ff: Scaling factor for alpha in mode C (default: 1.0)
+        s_lambda: Scaling factor for lambda in mode C (default: 1.0)
 
     Returns:
         (alpha_pred, lambda_m) where:
             alpha_pred: predicted fifth-force strength (dimensionless)
-            lambda_m: range in meters
+            lambda_m: range in meters (scaled by s_lambda in mode C)
+    
+    Mapping Modes:
+        - Mode A: α_pred = α_eff² (legacy placeholder)
+        - Mode B: α_pred = 2(κ α_eff)² (portal-derived proxy)
+        - Mode C: α_pred = s_ff α_eff², λ → s_lambda λ (agnostic scaling)
+        - Mode D: ToE-native bridge using κ_cH, v_c → θ_hc (Eq. 13) → α (ToE normalization)
     """
     # Extract m_phi (handle both GeV and eV)
     m_phi = model.get("m_phi") or model.get("m_phi_GeV")
@@ -87,10 +122,62 @@ def model_point_to_alpha_lambda(model: dict) -> tuple[float, float]:
         m_phi_eV = m_phi * 1e9
         lambda_m = mass_eV_to_lambda_m(m_phi_eV)
     
-    # Extract theta
+    # Handle Mode D separately (ToE-native, doesn't use derive_alpha_normalized)
+    if mode == "D":
+        # Mode D: ToE-Native Higgs-Mixing Bridge
+        # Uses explicit ToE equations: κ_cH, v_c → θ_hc (Eq. 13) → α
+        if toe_theta_hc is None or toe_alpha_from_theta is None:
+            raise NotImplementedError(
+                "Mode D requires toe_mapping module. Ensure code/inference/fifth_force/toe_mapping.py exists"
+            )
+        
+        # Extract ToE parameters
+        kappa_cH = model.get("kappa_cH")
+        v_c_GeV = model.get("v_c_GeV")
+        m_c_GeV = model.get("m_c_GeV")
+        f_n = model.get("f_n", 0.30)  # Default nucleon form factor
+        
+        # Support backward compatibility: if theta is provided directly, use it
+        theta_provided = model.get("theta")
+        
+        if theta_provided is not None and (kappa_cH is None or v_c_GeV is None):
+            # Backward compatibility: use provided theta directly
+            theta_hc = theta_provided
+        elif kappa_cH is not None and v_c_GeV is not None:
+            # ToE-native: compute theta from portal parameters
+            if m_c_GeV is None:
+                # Try to derive m_c from m_phi
+                if m_phi_eV is not None:
+                    m_c_GeV = m_phi_eV * 1e-9
+                elif m_phi is not None:
+                    m_c_GeV = m_phi
+                else:
+                    raise ValueError(
+                        "Mode D requires m_c_GeV (or m_phi/m_phi_eV) when using kappa_cH, v_c"
+                    )
+            
+            # Compute θ_hc using ToE Eq. (13)
+            theta_hc = toe_theta_hc(
+                kappa_cH=kappa_cH,
+                v_c_GeV=v_c_GeV,
+                m_c_GeV=m_c_GeV,
+            )
+        else:
+            raise ValueError(
+                "Mode D requires either (kappa_cH, v_c_GeV, m_c_GeV) or theta in model dict"
+            )
+        
+        # Compute α_pred using ToE normalization
+        alpha_pred = toe_alpha_from_theta(theta=theta_hc, f_n=f_n)
+        
+        # Lambda is already computed from m_phi above
+        # No additional scaling for Mode D (it's the "exact" mapping)
+        return alpha_pred, lambda_m
+    
+    # For modes A/B/C, extract theta and use existing pipeline
     theta = model.get("theta")
     if theta is None:
-        raise ValueError("theta required in model point")
+        raise ValueError("theta required in model point for modes A/B/C")
     
     # Compute alpha using existing pipeline function
     mu_sb = model.get("mu_sb")
@@ -107,10 +194,76 @@ def model_point_to_alpha_lambda(model: dict) -> tuple[float, float]:
             Theta=Theta_lab,
         )
         
-        # TODO: Temporary mapping - alpha_pred = alpha_eff**2
-        # This should be refined based on physics justification
-        # For now, use squared to ensure positive alpha_pred
-        alpha_pred = alpha_eff ** 2
+        # Apply mapping mode
+        if mode == "A":
+            # Mode A: Legacy placeholder
+            # α_pred = α_eff² (temporary surrogate, kept for backward compatibility)
+            alpha_pred = alpha_eff ** 2
+        elif mode == "B":
+            # Mode B: Portal-derived proxy
+            # α_pred = 2(κ α_eff)² (based on Higgs portal literature approximations)
+            # Assumption: Portal coupling factor κ provides reasonable approximation
+            # Limitation: Not derived from first principles
+            alpha_pred = 2.0 * (kappa * alpha_eff) ** 2
+        elif mode == "C":
+            # Mode C: Agnostic scaling
+            # α_pred = s_ff α_eff², λ → s_lambda λ
+            # Explicit scaling knobs for sensitivity analysis
+            # Limitation: No physical justification for specific scaling values
+            alpha_pred = s_ff * (alpha_eff ** 2)
+            lambda_m = s_lambda * lambda_m
+        elif mode == "D":
+            # Mode D: ToE-Native Higgs-Mixing Bridge
+            # Uses explicit ToE equations: κ_cH, v_c → θ_hc (Eq. 13) → α
+            # This is the exact mapping from ToE parameters to Yukawa strength
+            if toe_theta_hc is None or toe_alpha_from_theta is None:
+                raise NotImplementedError(
+                    "Mode D requires toe_mapping module. Ensure code/inference/fifth_force/toe_mapping.py exists"
+                )
+            
+            # Extract ToE parameters
+            kappa_cH = model.get("kappa_cH")
+            v_c_GeV = model.get("v_c_GeV")
+            m_c_GeV = model.get("m_c_GeV")
+            f_n = model.get("f_n", 0.30)  # Default nucleon form factor
+            
+            # Support backward compatibility: if theta is provided directly, use it
+            theta_provided = model.get("theta")
+            
+            if theta_provided is not None and (kappa_cH is None or v_c_GeV is None):
+                # Backward compatibility: use provided theta directly
+                theta_hc = theta_provided
+            elif kappa_cH is not None and v_c_GeV is not None:
+                # ToE-native: compute theta from portal parameters
+                if m_c_GeV is None:
+                    # Try to derive m_c from m_phi
+                    if m_phi_eV is not None:
+                        m_c_GeV = m_phi_eV * 1e-9
+                    elif m_phi is not None:
+                        m_c_GeV = m_phi
+                    else:
+                        raise ValueError(
+                            "Mode D requires m_c_GeV (or m_phi/m_phi_eV) when using kappa_cH, v_c"
+                        )
+                
+                # Compute θ_hc using ToE Eq. (13)
+                theta_hc = toe_theta_hc(
+                    kappa_cH=kappa_cH,
+                    v_c_GeV=v_c_GeV,
+                    m_c_GeV=m_c_GeV,
+                )
+            else:
+                raise ValueError(
+                    "Mode D requires either (kappa_cH, v_c_GeV, m_c_GeV) or theta in model dict"
+                )
+            
+            # Compute α_pred using ToE normalization
+            alpha_pred = toe_alpha_from_theta(theta=theta_hc, f_n=f_n)
+            
+            # Lambda is already computed from m_phi above
+            # No additional scaling for Mode D (it's the "exact" mapping)
+        else:
+            raise ValueError(f"Invalid mapping mode: {mode}. Must be 'A', 'B', 'C', or 'D'")
         
         # Ensure positive
         if alpha_pred <= 0:

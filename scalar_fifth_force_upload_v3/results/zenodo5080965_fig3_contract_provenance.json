@@ -1,0 +1,11 @@
+{
+  "filename": "zenodo5080965_fig3_contract.csv",
+  "sha256": "bb7e8cee9ec9d20244c650871b3355854fb09e9e005fb90ead2b23d9a7953b07",
+  "rows": 27,
+  "lambda_min": 2.921505579642261e-11,
+  "lambda_max": 8.448217536634402e-09,
+  "source_counts": {
+    "zenodo5080965_fig3": 27
+  },
+  "warnings": []
+}

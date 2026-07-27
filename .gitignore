@@ -33,3 +33,4 @@ results/fifth_force/*.json
 !results/fifth_force/.gitkeep
 !data/raw/fifth_force/.gitkeep
 
+PRIVATE_VAULT_SAFETY_RULES.md

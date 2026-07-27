@@ -4,7 +4,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 import pandas as pd
 import math
@@ -13,6 +13,7 @@ try:
     from .yukawa import model_point_to_alpha_lambda
     from .envelope import alpha_max_envelope, list_curves
     from .constraints import is_excluded
+    from .registry import is_real_curve
 except ImportError:
     # Handle case when run as script
     import sys
@@ -21,6 +22,7 @@ except ImportError:
     from code.inference.fifth_force.yukawa import model_point_to_alpha_lambda
     from code.inference.fifth_force.envelope import alpha_max_envelope, list_curves
     from code.inference.fifth_force.constraints import is_excluded
+    from code.inference.fifth_force.registry import is_real_curve
 
 # Constants for frequency conversions (CODATA 2018)
 C_LIGHT = 299792458.0  # Speed of light (m/s)
@@ -63,6 +65,7 @@ def sample_model_points(
     mu_sb_min: float = 1e-3,
     mu_sb_max: float = 1.0,
     seed: int = 42,
+    target_lambda_ranges: Optional[List[Tuple[float, float]]] = None,
 ) -> List[Dict[str, float]]:
     """Sample model points uniformly in log space.
     
@@ -72,37 +75,176 @@ def sample_model_points(
         theta_min, theta_max: Mixing angle range
         mu_sb_min, mu_sb_max: Scale-breaking mass range (as ratio mu_sb/m_h)
         seed: Random seed for reproducibility
+        target_lambda_ranges: Optional list of (lambda_min, lambda_max) tuples in meters.
+            If provided, points will be sampled such that lambda_m falls within these ranges.
+            Requires additional computation: lambda_m = hbar*c / (m_phi * c^2) = hbar*c / (m_phi * GeV_to_eV * eV_to_kg * c^2)
+            Simplified: m_phi_eV = m_phi_GeV * 1e9, lambda_m ≈ 1.973e-16 / m_phi_GeV
     
     Returns:
         List of model point dictionaries
     """
     rng = np.random.RandomState(seed)
     
+    # CODATA: hbar*c in GeV*m
+    HBAR_C_GEV_M = 1.973269804e-16
+    
     points = []
-    for i in range(n_points):
+    attempts = 0
+    max_attempts = n_points * 10  # Safety limit
+    
+    while len(points) < n_points and attempts < max_attempts:
+        attempts += 1
+        
         # Log-uniform sampling
         log_m_phi = rng.uniform(np.log10(m_phi_min), np.log10(m_phi_max))
         log_theta = rng.uniform(np.log10(theta_min), np.log10(theta_max))
         log_mu_sb = rng.uniform(np.log10(mu_sb_min), np.log10(mu_sb_max))
         
+        m_phi_GeV = 10.0 ** log_m_phi
+        
+        # If target_lambda_ranges specified, filter by lambda_m
+        if target_lambda_ranges:
+            # Compute lambda_m from m_phi
+            lambda_m = HBAR_C_GEV_M / m_phi_GeV
+            
+            # Check if lambda_m is in any target range
+            in_range = False
+            for lam_min, lam_max in target_lambda_ranges:
+                if lam_min <= lambda_m <= lam_max:
+                    in_range = True
+                    break
+            
+            if not in_range:
+                continue  # Skip this point
+        
         points.append({
-            "m_phi_GeV": 10.0 ** log_m_phi,
+            "m_phi_GeV": m_phi_GeV,
             "theta": 10.0 ** log_theta,
             "mu_sb_over_m_h": 10.0 ** log_mu_sb,
         })
     
+    if len(points) < n_points:
+        print(f"Warning: Only sampled {len(points)}/{n_points} points within target lambda ranges after {attempts} attempts")
+    
     return points
+
+
+def compute_coverage_report(
+    lambda_samples: np.ndarray,
+    curves: List[Dict],
+) -> Dict[str, any]:
+    """Compute coverage report for sampled points across real curves.
+    
+    Args:
+        lambda_samples: Array of sampled lambda values (in meters)
+        curves: List of curve metadata dictionaries (should already be filtered to real if real_only mode)
+    
+    Returns:
+        Dictionary with coverage statistics for each real curve:
+        {
+            "real_curves": [
+                {
+                    "source_id": str,
+                    "lambda_min": float,
+                    "lambda_max": float,
+                    "fraction_covered": float,
+                    "count_covered": int,
+                    "count_total": int
+                },
+                ...
+            ],
+            "total_points": int,
+            "total_covered_by_any": int,
+            "fraction_covered_by_any": float,
+            "total_covered_by_all": int,  # Points covered by intersection of all curves
+            "fraction_covered_by_all": float,
+            "total_uncovered": int,  # Points outside all real curve supports
+            "fraction_uncovered": float
+        }
+    """
+    # Filter to real curves only (if not already filtered)
+    # If curves were obtained with real_only=True, all are real
+    # But check anyway to be safe
+    real_curves = [c for c in curves]
+    
+    coverage_data = []
+    total = len(lambda_samples)
+    
+    for curve_info in real_curves:
+        lambda_min = curve_info["lambda_min"]
+        lambda_max = curve_info["lambda_max"]
+        source_id = curve_info["source_id"]
+        
+        # Count points within this curve's λ range
+        in_range = (lambda_samples >= lambda_min) & (lambda_samples <= lambda_max)
+        count_covered = int(in_range.sum())
+        fraction_covered = count_covered / total if total > 0 else 0.0
+        
+        coverage_data.append({
+            "source_id": source_id,
+            "lambda_min": lambda_min,
+            "lambda_max": lambda_max,
+            "fraction_covered": fraction_covered,
+            "count_covered": count_covered,
+            "count_total": total,
+        })
+    
+    # Count points covered by any real curve
+    if real_curves:
+        covered_by_any = np.zeros(total, dtype=bool)
+        covered_by_all = np.ones(total, dtype=bool)  # Start with all True for intersection
+        
+        for curve_info in real_curves:
+            lambda_min = curve_info["lambda_min"]
+            lambda_max = curve_info["lambda_max"]
+            in_range = (lambda_samples >= lambda_min) & (lambda_samples <= lambda_max)
+            covered_by_any |= in_range
+            covered_by_all &= in_range  # Intersection: must be in ALL curves
+        
+        total_covered_by_any = int(covered_by_any.sum())
+        fraction_covered_by_any = total_covered_by_any / total if total > 0 else 0.0
+        
+        total_covered_by_all = int(covered_by_all.sum())
+        fraction_covered_by_all = total_covered_by_all / total if total > 0 else 0.0
+        
+        # Uncovered: points outside all real curve supports
+        total_uncovered = total - total_covered_by_any
+        fraction_uncovered = total_uncovered / total if total > 0 else 0.0
+    else:
+        total_covered_by_any = 0
+        fraction_covered_by_any = 0.0
+        total_covered_by_all = 0
+        fraction_covered_by_all = 0.0
+        total_uncovered = total
+        fraction_uncovered = 1.0
+    
+    return {
+        "real_curves": coverage_data,
+        "total_points": total,
+        "total_covered_by_any": total_covered_by_any,
+        "fraction_covered_by_any": fraction_covered_by_any,
+        "total_covered_by_all": total_covered_by_all,
+        "fraction_covered_by_all": fraction_covered_by_all,
+        "total_uncovered": total_uncovered,
+        "fraction_uncovered": fraction_uncovered,
+    }
 
 
 def compute_detectability(
     model_points: List[Dict[str, float]],
     curves: List[Dict] = None,
+    real_only: bool = False,
+    alpha_mode: str = "A",
+    kappa: float = 1.0,
+    s_ff: float = 1.0,
+    s_lambda: float = 1.0,
 ) -> pd.DataFrame:
     """Compute detectability ratio r = alpha_pred / alpha_max for each point.
     
     Args:
         model_points: List of model point dictionaries
         curves: List of curve metadata (default: auto-discover)
+        real_only: If True, exclude synthetic/placeholder curves (default: False)
     
     Returns:
         DataFrame with columns: m_phi_GeV, theta, mu_sb_over_m_h, 
@@ -110,10 +252,14 @@ def compute_detectability(
         is_excluded, tightest_source_id
     """
     if curves is None:
-        curves = list_curves()
+        from .registry import list_curves
+        curves = list_curves(real_only=real_only)
     
     if not curves:
-        raise ValueError("No constraint curves available")
+        if real_only:
+            raise ValueError("No real constraint curves available. Ingest real curves first or use real_only=False.")
+        else:
+            raise ValueError("No constraint curves available")
     
     results = []
     
@@ -126,15 +272,27 @@ def compute_detectability(
                 "mu_sb": point["mu_sb_over_m_h"] * 125.0,  # Convert ratio to GeV
             }
             
-            # Compute (alpha_pred, lambda_m)
-            alpha_pred, lambda_m = model_point_to_alpha_lambda(model_dict)
+            # Compute (alpha_pred, lambda_m) with specified mapping mode
+            # Use mode parameters passed to compute_detectability function
+            alpha_pred, lambda_m = model_point_to_alpha_lambda(
+                model_dict,
+                mode=alpha_mode,
+                kappa=kappa,
+                s_ff=s_ff,
+                s_lambda=s_lambda,
+            )
             
             # Get envelope alpha_max
             try:
-                alpha_max, tightest_source_id = alpha_max_envelope(lambda_m, curves)
+                alpha_max, tightest_source_id = alpha_max_envelope(lambda_m, curves, real_only=real_only)
             except ValueError:
-                # Out of range - skip
-                continue
+                # Out of range - in real-only mode, don't mark as excluded
+                if real_only:
+                    # Skip points outside real coverage in real-only mode
+                    continue
+                else:
+                    # Out of range - skip
+                    continue
             
             # Compute detectability ratio
             r = alpha_pred / alpha_max if alpha_max > 0 else np.inf
@@ -144,19 +302,43 @@ def compute_detectability(
             E_eq_eV = freq_to_energy_eV(f_eq_hz) if not np.isnan(f_eq_hz) else np.nan
             
             # Check if excluded
-            # Load the tightest curve to check exclusion
-            tightest_curve_path = None
-            for curve_info in curves:
-                if curve_info["source_id"] == tightest_source_id:
-                    tightest_curve_path = curve_info["path"]
-                    break
-            
-            if tightest_curve_path:
-                from .constraints import load_constraint_curve
-                tightest_curve = load_constraint_curve(tightest_curve_path)
-                excluded = is_excluded(alpha_pred, lambda_m, tightest_curve)
+            # In real-only mode, only mark as excluded if within real curve coverage
+            excluded = False
+            if real_only:
+                # In real-only mode, check if point is within real curve coverage
+                tightest_curve_info = None
+                for curve_info in curves:
+                    if curve_info["source_id"] == tightest_source_id:
+                        tightest_curve_info = curve_info
+                        break
+                
+                if tightest_curve_info and is_real_curve(tightest_curve_info):
+                    # Check if lambda_m is within curve coverage
+                    lambda_min = tightest_curve_info["lambda_min"]
+                    lambda_max = tightest_curve_info["lambda_max"]
+                    if lambda_min <= lambda_m <= lambda_max:
+                        # Within coverage - can mark as excluded if r > 1
+                        excluded = alpha_pred > alpha_max
+                    else:
+                        # Outside coverage - don't mark as excluded in real-only mode
+                        excluded = False
+                else:
+                    # Not a real curve - don't mark as excluded in real-only mode
+                    excluded = False
             else:
-                excluded = alpha_pred > alpha_max
+                # Standard mode - check exclusion normally
+                tightest_curve_path = None
+                for curve_info in curves:
+                    if curve_info["source_id"] == tightest_source_id:
+                        tightest_curve_path = curve_info["path"]
+                        break
+                
+                if tightest_curve_path:
+                    from .constraints import load_constraint_curve
+                    tightest_curve = load_constraint_curve(tightest_curve_path)
+                    excluded = is_excluded(alpha_pred, lambda_m, tightest_curve)
+                else:
+                    excluded = alpha_pred > alpha_max
             
             results.append({
                 "m_phi_GeV": point["m_phi_GeV"],
@@ -182,6 +364,12 @@ def write_summary(
     df: pd.DataFrame,
     output_path: Path,
     curves: List[Dict] = None,
+    coverage_report: Dict[str, any] = None,
+    real_only: bool = False,
+    alpha_mode: str = "A",
+    alpha_params: Dict[str, float] = None,
+    seed: int = None,
+    git_commit: str = None,
 ) -> None:
     """Write detectability summary markdown.
     
@@ -286,6 +474,77 @@ def write_summary(
     lines = [
         "# Fifth-Force Detectability Summary",
         "",
+        "## Run Metadata",
+        "",
+    ]
+    
+    # Add run metadata
+    if seed is not None:
+        lines.append(f"**Seed:** {seed}")
+    if git_commit is not None:
+        lines.append(f"**Git Commit:** {git_commit}")
+    if real_only:
+        lines.append(f"**Real-Only Mode:** Enabled (synthetic curves excluded)")
+    else:
+        lines.append(f"**Real-Only Mode:** Disabled (all curves included)")
+    lines.append(f"**Alpha Mapping Mode:** {alpha_mode}")
+    if alpha_params:
+        for param, value in alpha_params.items():
+            lines.append(f"**{param}:** {value}")
+    lines.append("")
+    
+    # Add coverage report if provided
+    if coverage_report and real_only:
+        lines.append("## Real-Curve Coverage Report")
+        lines.append("")
+        lines.append("**Purpose:** Shows what fraction of sampled points fall within real experimental coverage.")
+        lines.append("")
+        lines.append("**Rule:** In real-only mode, points outside real curve coverage are NOT marked as 'excluded'.")
+        lines.append("")
+        
+        if coverage_report.get("real_curves"):
+            lines.append("### Coverage by Real Curve")
+            lines.append("")
+            lines.append("| Curve | λ_min (m) | λ_max (m) | Points Covered | Fraction |")
+            lines.append("|-------|-----------|-----------|----------------|----------|")
+            
+            for curve_info in coverage_report["real_curves"]:
+                source_id = curve_info["source_id"]
+                lambda_min = curve_info["lambda_min"]
+                lambda_max = curve_info["lambda_max"]
+                count_covered = curve_info["count_covered"]
+                fraction = curve_info["fraction_covered"]
+                
+                lines.append(f"| {source_id} | {lambda_min:.3e} | {lambda_max:.3e} | {count_covered}/{curve_info['count_total']} | {fraction:.2%} |")
+            
+            lines.append("")
+        
+        total_covered = coverage_report.get("total_covered_by_any", 0)
+        fraction_covered = coverage_report.get("fraction_covered_by_any", 0.0)
+        total_points = coverage_report.get("total_points", 0)
+        total_covered_all = coverage_report.get("total_covered_by_all", 0)
+        fraction_covered_all = coverage_report.get("fraction_covered_by_all", 0.0)
+        total_uncovered = coverage_report.get("total_uncovered", 0)
+        fraction_uncovered = coverage_report.get("fraction_uncovered", 0.0)
+        
+        lines.append(f"**Total Coverage:** {total_covered}/{total_points} points ({fraction_covered:.2%}) covered by at least one real curve")
+        lines.append("")
+        lines.append(f"**Intersection Coverage:** {total_covered_all}/{total_points} points ({fraction_covered_all:.2%}) covered by all real curves")
+        lines.append("")
+        
+        if total_uncovered > 0:
+            lines.append(f"⚠️ **Uncovered Points:** {total_uncovered}/{total_points} points ({fraction_uncovered:.2%}) outside all real curve supports")
+            lines.append("   In real-only mode, these points are not marked as 'excluded' and should be interpreted cautiously.")
+            lines.append("")
+        else:
+            lines.append(f"✅ **Uncovered Points:** 0/{total_points} (0.00%) - all points within real experimental coverage")
+            lines.append("")
+        
+        lines.append("---")
+        lines.append("")
+    
+    # Add curve info
+    lines.extend([
         "## Purpose",
         "",
         "This report quantifies where the scalar would be detectable if it exists by computing",
@@ -295,8 +554,16 @@ def write_summary(
         "",
         f"{curve_info}",
         "",
-        "**Note:** Synthetic curves are for plumbing validation only; canonical detectability conclusions require real envelope curves with full provenance.",
-        "",
+    ])
+    
+    if real_only:
+        lines.append("**Note:** Real-only mode enabled. Synthetic curves excluded from envelope.")
+    else:
+        lines.append("**Note:** Synthetic curves are for plumbing validation only; canonical detectability conclusions require real envelope curves with full provenance.")
+    lines.append("")
+    
+    # Add statistics section
+    lines.extend([
         "## Statistics",
         "",
         f"Total points computed: {total}",
@@ -312,7 +579,7 @@ def write_summary(
         "",
         "These are the points closest to detection threshold:",
         "",
-    ]
+    ])
     
     # Add table header (include frequency columns if available)
     if "f_eq_hz" in df.columns and "E_eq_eV" in df.columns:
@@ -455,6 +722,42 @@ def main():
         help="Random seed (default: 42)",
     )
     ap.add_argument(
+        "--real-only",
+        action="store_true",
+        help="Exclude synthetic/placeholder curves, use only real experimental data",
+    )
+    ap.add_argument(
+        "--alpha-mode",
+        type=str,
+        default="A",
+        choices=["A", "B", "C"],
+        help="Alpha mapping mode: A (placeholder), B (portal-proxy), C (agnostic scaling) (default: A)",
+    )
+    ap.add_argument(
+        "--kappa",
+        type=float,
+        default=1.0,
+        help="Portal coupling factor kappa for mode B (default: 1.0)",
+    )
+    ap.add_argument(
+        "--s-ff",
+        type=float,
+        default=1.0,
+        help="Scaling factor s_ff for mode C (default: 1.0)",
+    )
+    ap.add_argument(
+        "--s-lambda",
+        type=float,
+        default=1.0,
+        help="Lambda scaling factor s_lambda for mode C (default: 1.0)",
+    )
+    ap.add_argument(
+        "--target-frac",
+        type=float,
+        default=0.0,
+        help="Fraction of samples to target in real curve lambda range (default: 0.0 = uniform sampling)",
+    )
+    ap.add_argument(
         "--output",
         type=Path,
         default=Path("results/fifth_force/detectability_summary.md"),
@@ -466,28 +769,160 @@ def main():
     # Ensure output directory exists
     args.output.parent.mkdir(parents=True, exist_ok=True)
     
-    # Sample points
+    # Get git commit hash if available
+    git_commit = None
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent.parent.parent,
+        )
+        if result.returncode == 0:
+            git_commit = result.stdout.strip()
+    except Exception:
+        pass
+    
+    # Get curves list for coverage reporting
+    from .registry import list_curves, is_real_curve
+    curves = list_curves(real_only=args.real_only)
+    
+    # Sample points (with enhanced mixture sampling if real_only mode)
     print(f"Sampling {args.n_points} model points...")
-    points = sample_model_points(
-        n_points=args.n_points,
-        m_phi_min=args.m_phi_min,
-        m_phi_max=args.m_phi_max,
-        theta_min=args.theta_min,
-        theta_max=args.theta_max,
-        mu_sb_min=args.mu_sb_min,
-        mu_sb_max=args.mu_sb_max,
-        seed=args.seed,
-    )
+    
+    # Enhanced mixture sampling: default to 50/50 split if real_only=True and target_frac not specified
+    use_mixture = args.real_only and curves
+    if use_mixture:
+        if args.target_frac <= 0:
+            # Default to 50/50 mixture sampling when real_only=True
+            target_frac = 0.5
+            print(f"  Using 50/50 mixture sampling (default for real-only mode)")
+        else:
+            target_frac = args.target_frac
+        
+        # Compute lambda coverage from real curves
+        # Build list of all lambda ranges from real curves
+        lambda_ranges = [(c["lambda_min"], c["lambda_max"]) for c in curves]
+        lambda_min_overall = min(c["lambda_min"] for c in curves)
+        lambda_max_overall = max(c["lambda_max"] for c in curves)
+        
+        # Sample with targeted fraction in coverage range
+        n_targeted = int(args.n_points * target_frac)
+        n_uniform = args.n_points - n_targeted
+        
+        # Targeted samples: constrain lambda_m to be within real curve coverage
+        points_targeted = sample_model_points(
+            n_points=n_targeted,
+            m_phi_min=args.m_phi_min,
+            m_phi_max=args.m_phi_max,
+            theta_min=args.theta_min,
+            theta_max=args.theta_max,
+            mu_sb_min=args.mu_sb_min,
+            mu_sb_max=args.mu_sb_max,
+            seed=args.seed,
+            target_lambda_ranges=lambda_ranges,
+        )
+        
+        # Uniform samples (full range, no lambda constraint)
+        points_uniform = sample_model_points(
+            n_points=n_uniform,
+            m_phi_min=args.m_phi_min,
+            m_phi_max=args.m_phi_max,
+            theta_min=args.theta_min,
+            theta_max=args.theta_max,
+            mu_sb_min=args.mu_sb_min,
+            mu_sb_max=args.mu_sb_max,
+            seed=args.seed + 1000000,  # Different seed for uniform samples
+            target_lambda_ranges=None,  # No constraint
+        )
+        
+        # Combine points
+        points = points_targeted + points_uniform
+        print(f"  - {len(points_targeted)} targeted in real curve λ ranges (union: [{lambda_min_overall:.3e}, {lambda_max_overall:.3e}] m)")
+        print(f"  - {len(points_uniform)} uniform across full prior range")
+    else:
+        # Standard uniform sampling
+        points = sample_model_points(
+            n_points=args.n_points,
+            m_phi_min=args.m_phi_min,
+            m_phi_max=args.m_phi_max,
+            theta_min=args.theta_min,
+            theta_max=args.theta_max,
+            mu_sb_min=args.mu_sb_min,
+            mu_sb_max=args.mu_sb_max,
+            seed=args.seed,
+        )
     
     # Compute detectability
     print("Computing detectability ratios...")
-    df = compute_detectability(points)
+    if args.real_only:
+        print(f"  - Real-only mode: excluding synthetic/placeholder curves")
+    print(f"  - Alpha mapping mode: {args.alpha_mode}")
+    if args.alpha_mode == "B":
+        print(f"    - kappa: {args.kappa}")
+    elif args.alpha_mode == "C":
+        print(f"    - s_ff: {args.s_ff}, s_lambda: {args.s_lambda}")
+    
+    df = compute_detectability(
+        points,
+        curves=curves,
+        real_only=args.real_only,
+        alpha_mode=args.alpha_mode,
+        kappa=args.kappa,
+        s_ff=args.s_ff,
+        s_lambda=args.s_lambda,
+    )
     
     print(f"Computed detectability for {len(df)} points")
     
+    # Compute coverage report if real-only mode
+    coverage_report = None
+    if args.real_only and len(df) > 0:
+        print("Computing coverage report...")
+        lambda_samples = df["lambda_m"].values
+        coverage_report = compute_coverage_report(lambda_samples, curves)
+        print(f"  - {coverage_report['total_covered_by_any']}/{coverage_report['total_points']} points ({coverage_report['fraction_covered_by_any']:.2%}) covered by real curves")
+    
+    # Prepare alpha params for metadata
+    alpha_params = {}
+    if args.alpha_mode == "B":
+        alpha_params["kappa"] = args.kappa
+    elif args.alpha_mode == "C":
+        alpha_params["s_ff"] = args.s_ff
+        alpha_params["s_lambda"] = args.s_lambda
+    
     # Write summary
     print(f"Writing summary to {args.output}...")
-    write_summary(df, args.output)
+    write_summary(
+        df,
+        args.output,
+        curves=curves,
+        coverage_report=coverage_report,
+        real_only=args.real_only,
+        alpha_mode=args.alpha_mode,
+        alpha_params=alpha_params,
+        seed=args.seed,
+        git_commit=git_commit,
+    )
+    
+    # Also write run metadata JSON
+    import json
+    run_metadata_path = args.output.parent / "detectability_run.json"
+    run_metadata = {
+        "seed": args.seed,
+        "n_points": args.n_points,
+        "real_only": args.real_only,
+        "alpha_mode": args.alpha_mode,
+        "alpha_params": alpha_params,
+        "target_frac": args.target_frac,
+        "git_commit": git_commit,
+        "curves_used": [c["source_id"] for c in curves] if curves else [],
+    }
+    if git_commit:
+        run_metadata["git_commit"] = git_commit
+    run_metadata_path.write_text(json.dumps(run_metadata, indent=2))
+    print(f"  - Run metadata: {run_metadata_path}")
     
     print("Done.")
 

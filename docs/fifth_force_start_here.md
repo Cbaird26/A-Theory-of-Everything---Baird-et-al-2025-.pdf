@@ -55,9 +55,46 @@ python -m code.inference.fifth_force.ingest data/raw/fifth_force/my_constraint.c
 - `data/processed/my_constraint_validated.csv` — normalized, validated data
 - `results/fifth_force/my_constraint_provenance.json` — audit trail
 
+**Canonical datasets:** See [`docs/DATA_GROUND_TRUTH.md`](DATA_GROUND_TRUTH.md) for canonical dataset paths and provenance protocol.
+
 ---
 
-### 3. Run Dominance Analysis
+### 3. Run Detectability Analysis (Canonical Results)
+
+**Recommended: Real-only mode with coverage reporting**
+
+```bash
+# Real-only mode (excludes synthetic curves)
+make fifth-detectability SEED=42 NPTS=2000 REAL_ONLY=1 ALPHA_MODE=A
+
+# This produces:
+# - results/fifth_force/detectability_summary.md (with coverage report)
+# - results/fifth_force/detectability_points.csv
+# - results/fifth_force/detectability_run.json (metadata)
+```
+
+**What this does:**
+- Excludes synthetic/placeholder curves (canonical analysis)
+- Computes detectability ratios (r = α_pred / α_max)
+- Generates coverage report (fraction of points within real curve λ ranges)
+- Records mapping mode and parameters in metadata
+
+**Alternative: Full envelope mode (includes synthetic curves)**
+
+```bash
+# Full envelope (includes synthetic curves for validation)
+make fifth-detectability SEED=42 NPTS=2000 REAL_ONLY=0 ALPHA_MODE=A
+```
+
+**Note:** Synthetic curves are for plumbing/validation only. Canonical results should use real-only mode.
+
+**For details on real-only mode and coverage reporting, see:**
+- [`docs/REAL_VS_SYNTHETIC_GUARDRAILS.md`](REAL_VS_SYNTHETIC_GUARDRAILS.md)
+- [`docs/DATA_GROUND_TRUTH.md`](DATA_GROUND_TRUTH.md)
+
+---
+
+### 3. Run Dominance Analysis (Optional)
 
 Run a full dominance scan including fifth-force constraints:
 
@@ -132,9 +169,16 @@ See `docs/fifth_force_data_contract.md` for full specification.
 
 ## Next Steps
 
-- **Results summary:** See `docs/fifth_force_summary.md`
-- **Data contract:** See `docs/fifth_force_data_contract.md`
-- **Mapping audit:** See `docs/dev/fifth_force_mapping_audit.md`
+- **Results summary:** See [`docs/fifth_force_summary.md`](fifth_force_summary.md)
+- **Data contract:** See [`docs/fifth_force_data_contract.md`](fifth_force_data_contract.md)
+- **Mapping audit:** See [`docs/dev/fifth_force_mapping_audit.md`](dev/fifth_force_mapping_audit.md)
+
+**World-Grade Documentation:**
+- **Scientific contract:** [`docs/CLAIMS_LIMITS_AND_FALSIFIERS.md`](CLAIMS_LIMITS_AND_FALSIFIERS.md) — Claims vs. assumptions
+- **Reviewer quickstart:** [`docs/REVIEWER_QUICKSTART.md`](REVIEWER_QUICKSTART.md) — Run lab in 10 minutes
+- **Data ground truth:** [`docs/DATA_GROUND_TRUTH.md`](DATA_GROUND_TRUTH.md) — Canonical datasets and provenance
+- **Real vs. synthetic:** [`docs/REAL_VS_SYNTHETIC_GUARDRAILS.md`](REAL_VS_SYNTHETIC_GUARDRAILS.md) — Guardrails for data usage
+- **Mapping sensitivity:** [`docs/MAPPING_SENSITIVITY.md`](MAPPING_SENSITIVITY.md) — Mapping modes and sensitivity analysis
 
 ---
 
@@ -147,14 +191,19 @@ make fifth-validate
 # 2. Ingest raw constraint curve
 make fifth-ingest INPUT=data/raw/fifth_force/zenodo5080965_fig3_contract.csv
 
-# 3. Run dominance scan
-make fifth-scan
+# 3. Run detectability analysis (canonical: real-only mode)
+make fifth-detectability SEED=42 NPTS=2000 REAL_ONLY=1 ALPHA_MODE=A
 
-# 4. Run envelope scan (if multiple curves)
-make fifth-scan-envelope
+# 4. Run mapping sensitivity sweep (optional)
+make fifth-detectability SEED=42 NPTS=2000 REAL_ONLY=1 ALPHA_MODE=B KAPPA=1.0
+make fifth-detectability SEED=42 NPTS=2000 REAL_ONLY=1 ALPHA_MODE=C S_FF=10.0 S_LAMBDA=1.0
 
-# 5. Generate full report
-make fifth-report
+# 5. Generate data ledgers (audit trail)
+make fifth-data-ledger
+make fifth-sha256-ledger
+
+# 6. Generate canonical figures
+make fifth-figures
 ```
 
 ---

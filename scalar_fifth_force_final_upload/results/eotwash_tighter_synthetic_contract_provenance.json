@@ -1,0 +1,11 @@
+{
+  "filename": "eotwash_tighter_synthetic_contract.csv",
+  "sha256": "a015ba533c7d499b7da4ffee401fd0aee6484277892151d111bd01d38be20590",
+  "rows": 50,
+  "lambda_min": 0.0001,
+  "lambda_max": 0.01,
+  "source_counts": {
+    "eotwash_tighter_synthetic": 50
+  },
+  "warnings": []
+}

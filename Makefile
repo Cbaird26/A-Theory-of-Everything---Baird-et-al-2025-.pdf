@@ -1,10 +1,13 @@
 # MQGT-SCF Makefile
 # One-command workflows for common tasks
 
-.PHONY: help qrng-validate qrng-ingest qrng-calibrate qrng-mixed qrng-multisource-validate qrng-multisource-report qrng-dominance-with-multisource fifth-validate fifth-ingest fifth-report fifth-detectability fifth-fetch-zenodo5080965
+.PHONY: help prepare-release qrng-validate qrng-ingest qrng-calibrate qrng-mixed qrng-multisource-validate qrng-multisource-report qrng-dominance-with-multisource fifth-validate fifth-ingest fifth-report fifth-detectability fifth-fetch-zenodo5080965
 
 help:
 	@echo "MQGT-SCF Makefile Targets:"
+	@echo ""
+	@echo "Release Preparation:"
+	@echo "  make prepare-release [VERSION=v1.4.0] - Prepare release bundle with ledgers and hashes"
 	@echo ""
 	@echo "QRNG Pipeline:"
 	@echo "  make qrng-validate              - Run QRNG regression tests"
@@ -23,9 +26,24 @@ help:
 	@echo "  make fifth-detectability        - Compute detectability map (r = alpha_pred/alpha_max)"
 	@echo "  make fifth-fetch-zenodo5080965  - Fetch and ingest Zenodo 5080965 Fig3 curve"
 	@echo ""
+	@echo "Release Preparation:"
+	@echo "  make prepare-release VERSION=v1.4.0"
+	@echo ""
 	@echo "Examples:"
 	@echo "  make qrng-ingest INPUT=data/raw/my_qrng.csv"
 	@echo "  make fifth-ingest INPUT=data/raw/fifth_force/my_constraint.csv"
+	@echo "  make prepare-release VERSION=v1.4.0"
+
+# Release Preparation Targets
+
+prepare-release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make prepare-release VERSION=v1.4.0"; \
+		echo "Or: make prepare-release (uses VERSION=dev)"; \
+		VERSION=dev; \
+	fi
+	@echo "Preparing release ${VERSION}..."
+	@bash scripts/prepare_release.sh ${VERSION}
 
 # QRNG Pipeline Targets
 
@@ -133,9 +151,37 @@ fifth-detectability:
 	@echo "Computing fifth-force detectability map..."
 	@if [ -z "$(SEED)" ]; then SEED=42; fi
 	@if [ -z "$(NPTS)" ]; then NPTS=1000; fi
-	python -m code.inference.fifth_force.detectability --seed $(SEED) --n-points $(NPTS)
+	@if [ -z "$(REAL_ONLY)" ]; then REAL_ONLY=0; fi
+	@if [ -z "$(ALPHA_MODE)" ]; then ALPHA_MODE=A; fi
+	@if [ -z "$(KAPPA)" ]; then KAPPA=1.0; fi
+	@if [ -z "$(S_FF)" ]; then S_FF=1.0; fi
+	@if [ -z "$(S_LAMBDA)" ]; then S_LAMBDA=1.0; fi
+	@if [ -z "$(TARGET_FRAC)" ]; then TARGET_FRAC=0.0; fi
+	@if [ "$(REAL_ONLY)" = "1" ]; then \
+		python -m code.inference.fifth_force.detectability --seed $(SEED) --n-points $(NPTS) --real-only --alpha-mode $(ALPHA_MODE) --kappa $(KAPPA) --s-ff $(S_FF) --s-lambda $(S_LAMBDA) --target-frac $(TARGET_FRAC) || exit 1; \
+	else \
+		python -m code.inference.fifth_force.detectability --seed $(SEED) --n-points $(NPTS) --alpha-mode $(ALPHA_MODE) --kappa $(KAPPA) --s-ff $(S_FF) --s-lambda $(S_LAMBDA) --target-frac $(TARGET_FRAC) || exit 1; \
+	fi
 	@echo "Detectability summary: results/fifth_force/detectability_summary.md"
-	@echo "  (seed=$(SEED), n_points=$(NPTS))"
+	@echo "  (seed=$(SEED), n_points=$(NPTS), real_only=$(REAL_ONLY), alpha_mode=$(ALPHA_MODE))"
+
+fifth-mapping-sensitivity:
+	@echo "Running mapping sensitivity sweep..."
+	@if [ -z "$(SEED)" ]; then SEED=42; fi
+	@if [ -z "$(NPTS)" ]; then NPTS=2000; fi
+	@if [ -z "$(REAL_ONLY)" ]; then REAL_ONLY=1; fi
+	@S_FF_DEFAULT=0.1,1.0,10.0,100.0,1000.0,10000.0; \
+	if [ -z "$(S_FF_VALUES)" ]; then \
+		S_FF_VALUES=$$S_FF_DEFAULT; \
+	else \
+		S_FF_VALUES="$(S_FF_VALUES)"; \
+	fi; \
+	if [ "$(REAL_ONLY)" = "1" ]; then \
+		python scripts/mapping_sensitivity_sweep.py --seed $(SEED) --n-points $(NPTS) --real-only --s-ff-values "$$S_FF_VALUES" --output-dir results; \
+	else \
+		python scripts/mapping_sensitivity_sweep.py --seed $(SEED) --n-points $(NPTS) --no-real-only --s-ff-values "$$S_FF_VALUES" --output-dir results; \
+	fi
+	@echo "✅ Sensitivity summary: results/mapping_sensitivity_summary.md"
 
 fifth-fetch-zenodo5080965:
 	@echo "Fetching Zenodo 5080965 Fig3 curve..."
@@ -146,6 +192,16 @@ fifth-fetch-bennu:
 	@echo "Generating Bennu/OSIRIS-REx constraint curve..."
 	python -m code.inference.fifth_force.importers.bennu_osiris_rex
 	@echo "✅ Bennu curve ingested. Validated CSV: data/processed/bennu_osiris_rex_2024_validated.csv"
+
+fifth-ingest-kapner:
+	@echo "Ingesting Kapner et al. (2007) constraint..."
+	@python -m code.inference.fifth_force.importers.kapner_prl2007
+	@echo "✅ Validated CSV: data/processed/kapner_prl2007_digitized_contract_validated.csv"
+
+fifth-ingest-lee:
+	@echo "Ingesting Lee et al. (2020) constraint..."
+	@python -m code.inference.fifth_force.importers.lee_arxiv2020
+	@echo "✅ Validated CSV: data/processed/lee_arxiv2020_digitized_contract_validated.csv"
 
 fifth-frequency-figure:
 	@echo "Generating frequency ladder figure..."
@@ -166,4 +222,9 @@ fifth-frequency-interactive:
 	@echo "Generating interactive frequency ladder..."
 	python scripts/generate_interactive_frequency_ladder.py
 	@echo "✅ Interactive frequency ladder: results/frequency_ladder_interactive.html"
+
+fifth-frequency-figure:
+	@echo "Generating frequency atlas figure..."
+	python scripts/frequency_figure.py
+	@echo "✅ Frequency atlas figure: results/frequency_atlas.png and .pdf"
 

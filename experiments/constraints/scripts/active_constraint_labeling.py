@@ -16,6 +16,36 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 
+def load_epsilon_max(results_dir: Path = Path("results/qrng"), 
+                     default: float = 0.002292) -> Tuple[float, str]:
+    """
+    Load epsilon_max from pooled multisource file if available, else use default.
+    
+    Args:
+        results_dir: Directory containing multisource_epsilon_max.json
+        default: Default epsilon_max if pooled file not found
+    
+    Returns:
+        (epsilon_max, source_description) tuple
+    """
+    pooled_file = results_dir / "multisource_epsilon_max.json"
+    
+    if pooled_file.exists():
+        try:
+            data = json.loads(pooled_file.read_text(encoding="utf-8"))
+            epsilon_max = data.get("epsilon_max", default)
+            method = data.get("method", "unknown")
+            num_sources = data.get("num_sources", 0)
+            source_desc = f"pooled_multisource (method={method}, N_sources={num_sources})"
+            return float(epsilon_max), source_desc
+        except Exception as e:
+            print(f"Warning: Failed to load pooled epsilon_max from {pooled_file}: {e}")
+            print(f"  Falling back to default: {default}")
+            return default, "single_source_default"
+    else:
+        return default, "single_source_default"
+
+
 # Constraint labels
 CONSTRAINT_LABELS = {
     0: 'ATLAS_mu',
@@ -141,12 +171,11 @@ def compute_fifth_force_slack(alpha: float, lambda_m: float,
 
 
 def compute_qrng_tilt_slack(alpha: float, lambda_m: float,
-                            epsilon_max: float = 0.002292) -> Tuple[float, float]:
+                            epsilon_max: Optional[float] = None) -> Tuple[float, float]:
     """
     Compute slack to QRNG tilt constraint.
     
-    |ε| < 0.002292 (from lfdr_withinrun results, 95% CL)
-    Updated from 0.0008 to match experimental data (calibrate_qrng_physics.py)
+    |ε| < epsilon_max (from pooled multisource or single-source default)
     Tilt relates to ethical bias: ε ∝ η(ΔE - ⟨ΔE⟩)
     For small mixing: η ∝ α
     
@@ -156,13 +185,17 @@ def compute_qrng_tilt_slack(alpha: float, lambda_m: float,
     Args:
         alpha: Yukawa strength
         lambda_m: Range (m)
-        epsilon_max: Maximum allowed tilt (default 0.0008)
+        epsilon_max: Maximum allowed tilt (if None, loads from pooled file or uses default)
     
     Returns:
         (slack, bound) where:
           slack: Slack (positive if viable, negative if excluded)
           bound: Maximum allowed epsilon (for normalization)
     """
+    # Load epsilon_max if not provided
+    if epsilon_max is None:
+        epsilon_max, _ = load_epsilon_max()
+    
     # Simplified: ε scales with α
     epsilon = alpha * 1e3  # Rough scaling
     slack = epsilon_max - abs(epsilon)
@@ -173,7 +206,7 @@ def label_constraints_for_grid(lambda_grid: np.ndarray, alpha_grid: np.ndarray,
                                m_phi_grid: Optional[np.ndarray] = None,
                                envelope_data: Optional[pd.DataFrame] = None,
                                alpha_max_allowed: Optional[float] = None,
-                               epsilon_max: float = 0.002292,
+                               epsilon_max: Optional[float] = None,
                                Theta_lab: float = 1.0,
                                br_max: float = 0.145,
                                use_normalized_slack: bool = True) -> Tuple[np.ndarray, np.ndarray]:
@@ -189,7 +222,7 @@ def label_constraints_for_grid(lambda_grid: np.ndarray, alpha_grid: np.ndarray,
         m_phi_grid: Optional scalar mass grid (GeV) for Higgs constraint
         envelope_data: Optional envelope DataFrame
         alpha_max_allowed: Optional maximum allowed alpha
-        epsilon_max: Maximum allowed QRNG tilt
+        epsilon_max: Maximum allowed QRNG tilt (if None, loads from pooled file or uses default)
         Theta_lab: Screening factor for lab experiments (applied only to fifth-force)
         br_max: Maximum allowed BR(H→inv) (default 0.145 conservative, 0.107 tight)
         use_normalized_slack: If True, compare normalized slack instead of raw slack
@@ -199,6 +232,13 @@ def label_constraints_for_grid(lambda_grid: np.ndarray, alpha_grid: np.ndarray,
           constraint_labels: array of constraint indices (-1=excluded, 0-3=constraint types)
           slacks: array of (n_points, n_constraints) slack values (raw or normalized based on flag)
     """
+    # Load epsilon_max if not provided
+    if epsilon_max is None:
+        epsilon_max, epsilon_source = load_epsilon_max()
+        print(f"QRNG epsilon_max: {epsilon_max:.6f} (source: {epsilon_source})")
+    else:
+        epsilon_source = "provided_explicitly"
+    
     shape = lambda_grid.shape
     n_constraints = 4
     
@@ -348,8 +388,8 @@ def main():
                    help='Path to envelope CSV')
     ap.add_argument('--alpha-max', type=float, default=None,
                    help='Maximum allowed alpha (overrides envelope)')
-    ap.add_argument('--epsilon-max', type=float, default=0.0008,
-                   help='Maximum allowed QRNG tilt')
+    ap.add_argument('--epsilon-max', type=float, default=None,
+                   help='Maximum allowed QRNG tilt (if None, loads from pooled multisource file)')
     ap.add_argument('--out-dir', type=str,
                    default='experiments/constraints/results',
                    help='Output directory')
@@ -365,6 +405,13 @@ def main():
     if envelope_path.exists():
         envelope_data = pd.read_csv(envelope_path)
     
+    # Load epsilon_max (from pooled file if available, else use provided or default)
+    epsilon_max = args.epsilon_max
+    epsilon_source = "provided_explicitly" if epsilon_max is not None else None
+    if epsilon_max is None:
+        epsilon_max, epsilon_source = load_epsilon_max()
+        print(f"QRNG epsilon_max: {epsilon_max:.6f} (source: {epsilon_source})")
+    
     # Create example grid (in practice, load from overlap analysis)
     lambda_range = np.logspace(-6, -1, 100)
     alpha_range = np.logspace(-12, -6, 100)
@@ -375,7 +422,7 @@ def main():
         lambda_grid, alpha_grid,
         envelope_data=envelope_data,
         alpha_max_allowed=args.alpha_max,
-        epsilon_max=args.epsilon_max
+        epsilon_max=epsilon_max
     )
     
     # Output directory
@@ -399,7 +446,9 @@ def main():
         'constraint_percentages': {
             name: 100 * count / sum(counts.values()) if sum(counts.values()) > 0 else 0
             for name, count in counts.items()
-        }
+        },
+        'qrng_epsilon_max': float(epsilon_max),
+        'qrng_epsilon_source': epsilon_source,
     }
     
     summary_path = out_dir / 'active_constraint_summary.json'

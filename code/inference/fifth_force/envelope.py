@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Tuple, Optional, List
 import pandas as pd
 import numpy as np
-from .registry import list_curves
+from .registry import list_curves, is_real_curve
 from .constraints import max_alpha_allowed
 
 
@@ -47,12 +47,14 @@ def alpha_max_by_curve(
 def alpha_max_envelope(
     lambda_m: float,
     curves: Optional[List[Dict]] = None,
+    real_only: bool = False,
 ) -> Tuple[float, Optional[str]]:
     """Get the tightest (minimum) alpha_max across all curves.
 
     Args:
         lambda_m: Range in meters
         curves: List of curve metadata dicts (default: auto-discover)
+        real_only: If True, exclude synthetic/placeholder curves (default: False)
 
     Returns:
         (alpha_env, tightest_source_id) where:
@@ -60,7 +62,8 @@ def alpha_max_envelope(
             tightest_source_id: source_id of the curve providing the tightest bound
     """
     if curves is None:
-        curves = list_curves()
+        from .registry import list_curves
+        curves = list_curves(real_only=real_only)
     
     if not curves:
         raise ValueError("No curves available for envelope")

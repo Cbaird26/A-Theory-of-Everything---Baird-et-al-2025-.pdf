@@ -1,0 +1,12 @@
+EXACT CSV PATH REQUIRED:
+
+If running from REPO ROOT:
+  data/raw/fifth_force/eotwash_prl2016_digitized_contract.csv
+
+If placing in PACKAGE FOLDER (for upload):
+  data_raw/eotwash_prl2016_digitized_contract.csv
+
+The script process_real_eotwash_curve.sh expects:
+  data/raw/fifth_force/eotwash_prl2016_digitized_contract.csv
+  (when run from repo root)
+

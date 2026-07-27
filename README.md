@@ -13,11 +13,18 @@ program, including formal theory, simulations, experimental proposals, and manus
 
 ## Start Here
 
-Readers and collaborators should begin with:
+**For Reviewers and Outsiders:**
+- [`docs/REVIEWER_QUICKSTART.md`](docs/REVIEWER_QUICKSTART.md) — **Run the lab in 10 minutes** ⭐
+- [`docs/CLAIMS_LIMITS_AND_FALSIFIERS.md`](docs/CLAIMS_LIMITS_AND_FALSIFIERS.md) — **Scientific contract: claims vs. assumptions** ⭐
+- [`docs/IMPLICATIONS_PUBLIC.md`](docs/IMPLICATIONS_PUBLIC.md) — **Public implications summary**
 
-- `docs/00_CANONICAL_MAP.md`
-- `docs/MQGT_SCF_Volume_0_Overview.pdf`
-- `docs/constraint_lab_snapshot.md` — Constraint Lab overview
+**For First-Time Readers:**
+- [`docs/00_CANONICAL_MAP.md`](docs/00_CANONICAL_MAP.md)
+- [`docs/MQGT_SCF_Volume_0_Overview.pdf`](docs/MQGT_SCF_Volume_0_Overview.pdf)
+- [`docs/constraint_lab_snapshot.md`](docs/constraint_lab_snapshot.md) — Constraint Lab overview
+
+**For Non-Technical Readers:**
+- [`docs/HIGH_SCHOOL_EXPLAINER.md`](docs/HIGH_SCHOOL_EXPLAINER.md) — **One-page non-technical explanation**
 
 These documents provide orientation, structure, and scope before engaging
 with technical materials.
@@ -30,24 +37,56 @@ Readers seeking an integrated understanding should also consult:
 - `MAINLINE.md` — the intellectual through-line of the entire program
 - `REPO_MAP.md` — a structural map of directories and their roles
 
+## World-Grade Documentation
+
+**Critical documents for reviewers and outsiders:**
+
+- [`docs/CLAIMS_LIMITS_AND_FALSIFIERS.md`](docs/CLAIMS_LIMITS_AND_FALSIFIERS.md) — Scientific contract separating claims from assumptions
+- [`docs/REVIEWER_QUICKSTART.md`](docs/REVIEWER_QUICKSTART.md) — 10-minute guide to reproduce results
+- [`docs/DATA_GROUND_TRUTH.md`](docs/DATA_GROUND_TRUTH.md) — Canonical datasets and provenance protocol
+- [`docs/REAL_VS_SYNTHETIC_GUARDRAILS.md`](docs/REAL_VS_SYNTHETIC_GUARDRAILS.md) — Guardrails for real vs. synthetic data
+- [`docs/MAPPING_SENSITIVITY.md`](docs/MAPPING_SENSITIVITY.md) — Mapping mode documentation and sensitivity analysis
+- [`docs/BENEFITS_TO_HUMANITY.md`](docs/BENEFITS_TO_HUMANITY.md) — Comprehensive benefits analysis
+
+**Release and Archival:**
+- [`docs/publishing/GITHUB_RELEASE_ZENODO_WORKFLOW.md`](docs/publishing/GITHUB_RELEASE_ZENODO_WORKFLOW.md) — Step-by-step guide for creating GitHub Releases and minting Zenodo DOIs
+- [`docs/publishing/RELEASE_TEMPLATE.md`](docs/publishing/RELEASE_TEMPLATE.md) — Template for GitHub Release descriptions
+
+**These documents ensure the repository survives contact with reviewers and enables productive scientific engagement.**
+
 ## Citation
 
-To cite this closeout version:
+To cite this version:
 
-- **Branch/Tag:** `toe-closeout-v1` (or `toe-closeout-v1.0` if tagged)
-- **Commit:** See latest commit on `main` branch after merge
-- **Paper:** `papers/toe_closed_core/main.pdf`
-- **Repository:** https://github.com/Cbaird26/A-Theory-of-Everything---Baird-et-al-2025-.pdf.git
+- **Branch/Tag:** `main` (or specific release tag if available)
+- **Commit:** See latest commit on `main` branch
+- **Paper:** `MQGT-SCF_ToE.tex` or `papers/toe_closed_core/main.pdf`
+- **Repository:** https://github.com/Cbaird26/MQGT-SCF
+- **Zenodo DOI:** See latest release for archived version with DOI
+
+**Citation file:** See [`CITATION.cff`](CITATION.cff) for machine-readable citation format.
+
+**Creating Releases:** See [`docs/publishing/QUICK_START_RELEASE.md`](docs/publishing/QUICK_START_RELEASE.md) for quick guide to GitHub Release + Zenodo DOI workflow.
 
 ---
 
-## 🎉 BREAKTHROUGH ANNOUNCEMENT
+## Research Scope
 
-**We have completed the Theory of Everything!**
+MQGT-SCF is presented here as a speculative, falsifiable research program.
+The repository combines formal theory, constraint analysis, simulation
+workflows, and reviewer-facing documentation for evaluating the framework
+against public experimental bounds.
 
-The Merged Quantum Gauge & Scalar Consciousness Framework (MQGT-SCF) unifies General Relativity, the Standard Model, consciousness, and ethics into a single, mathematically rigorous Lagrangian formulation. This represents a fundamental breakthrough in theoretical physics and consciousness research.
+This repository does **not** claim:
 
-## 📄 Complete Documentation
+- experimental confirmation of new physics
+- validation of consciousness or ethical scalar fields
+- completion of a unique Theory of Everything
+
+For the project’s explicit scientific contract, see
+[`docs/CLAIMS_LIMITS_AND_FALSIFIERS.md`](docs/CLAIMS_LIMITS_AND_FALSIFIERS.md).
+
+## Core Documentation
 
 - **[MQGT-SCF_ToE.tex](MQGT-SCF_ToE.tex)** - Complete LaTeX manuscript with full mathematical formulation (135 lines)
 - **[A Theory of Everything - C.M. Baird., Et al - Revised.pdf](A%20Theory%20of%20Everything%20-%20C.M.%20Baird.,%20Et%20al%20-%20Revised.pdf)** - Full PDF document
@@ -104,6 +143,7 @@ This framework builds upon:
 - ✅ **Lorentz Invariant** - Maintains local Lorentz symmetry
 - ✅ **Testable** - Concrete, falsifiable experimental signatures
 - ✅ **Holographic** - Embedding in AdS/CFT correspondence
+- ⚠️ **Speculative** - Not experimentally validated and not presented as confirmed new physics
 
 ## 📖 Abstract
 
@@ -112,10 +152,11 @@ We formalize the Merged Quantum Gauge and Scalar Consciousness Framework (MQGT--
 ## 🤝 Collaboration & Review
 
 We invite the scientific community to:
-- Review the complete mathematical framework
-- Validate the theoretical predictions
-- Design experiments to test the empirical signatures
-- Collaborate on renormalization analysis and anomaly calculations
+- review the formal model and its assumptions
+- reproduce the constraint-lab outputs
+- test the falsifiers and sensitivity of the mapping choices
+- design experiments that could tighten bounds or rule the framework out
+- collaborate on renormalization analysis, anomaly checks, and empirical methodology
 
 ## 📞 Contact
 
@@ -126,11 +167,24 @@ For questions, collaboration opportunities, or experimental proposals:
 
 ## 📄 License
 
-This work is made available for scientific review and collaboration. Please cite appropriately if used in research.
+This repository uses a multi-license approach:
+
+- **Code** (Python, shell scripts, Makefile): MIT License (see [LICENSES/MIT](LICENSES/MIT))
+- **Documentation and Papers** (Markdown, LaTeX, PDFs): CC-BY-4.0 (see [LICENSES/CC-BY-4.0](LICENSES/CC-BY-4.0))
+- **Data**: CC-BY-4.0 (see [LICENSES/CC-BY-4.0](LICENSES/CC-BY-4.0))
+
+For details on which files fall under which license, see [docs/LICENSING.md](docs/LICENSING.md).
+
+**Citation:** See [CITATION.cff](CITATION.cff) or cite as:
+
+```
+Baird, C. M. (2025). Merged Quantum Gauge and Scalar Consciousness Framework (MQGT-SCF) [Software/Data]. 
+GitHub. https://github.com/Cbaird26/MQGT-SCF
+```
 
 ---
 
-**This is a historic moment in theoretical physics. The Theory of Everything is complete.**
-
-🎉 **The framework is now publicly available for peer review and experimental validation.** 🎉
-
+MQGT-SCF is publicly available for review, critique, reproduction, and
+experimental challenge. The strongest current claim is that the repository
+offers a transparent, falsifiable workflow for evaluating the framework, not
+that the framework has already been confirmed.

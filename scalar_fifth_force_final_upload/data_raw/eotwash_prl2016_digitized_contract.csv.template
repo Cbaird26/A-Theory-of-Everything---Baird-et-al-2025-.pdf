@@ -1,0 +1,39 @@
+# Eöt-Wash PRL 2016 Digitized Constraint Curve Template
+#
+# This is a template file. Replace the example rows below with your digitized data.
+#
+# Required columns:
+#   - lambda_m: range in meters (float, positive, strictly increasing)
+#   - alpha_max: maximum allowed strength (dimensionless, positive)
+#   - source_id: use "eotwash_prl2016_digitized"
+#
+# Optional columns:
+#   - ref: paper citation (recommended)
+#
+# Units:
+#   - lambda_m: meters (e.g., 0.001 = 1 mm)
+#   - alpha_max: dimensionless (relative to gravity)
+#
+# Validation rules:
+#   - lambda_m values must be strictly increasing
+#   - All lambda_m > 0
+#   - All alpha_max > 0
+#   - alpha_max should generally decrease as lambda_m decreases (exclusion curve)
+#
+# Instructions:
+#   1. Digitize the curve using WebPlotDigitizer (see docs/dev/eotwash_digitization_guide.md)
+#   2. Export as CSV with columns: lambda_m, alpha_max
+#   3. Add source_id and ref columns
+#   4. Rename this file to: eotwash_prl2016_digitized_contract.csv (remove .template)
+#   5. Run: make fifth-ingest INPUT=data/raw/fifth_force/eotwash_prl2016_digitized_contract.csv
+#
+lambda_m,alpha_max,source_id,ref
+# Example rows (replace with your digitized data):
+# 1.2e-4,3.5e-6,eotwash_prl2016_digitized,"PRL 116, 131102 (2016) - Eöt-Wash Group"
+# 2.5e-4,2.1e-6,eotwash_prl2016_digitized,"PRL 116, 131102 (2016) - Eöt-Wash Group"
+# 5.0e-4,1.8e-6,eotwash_prl2016_digitized,"PRL 116, 131102 (2016) - Eöt-Wash Group"
+# 1.0e-3,1.2e-6,eotwash_prl2016_digitized,"PRL 116, 131102 (2016) - Eöt-Wash Group"
+# 2.0e-3,8.5e-7,eotwash_prl2016_digitized,"PRL 116, 131102 (2016) - Eöt-Wash Group"
+# 5.0e-3,5.2e-7,eotwash_prl2016_digitized,"PRL 116, 131102 (2016) - Eöt-Wash Group"
+# 1.0e-2,3.1e-7,eotwash_prl2016_digitized,"PRL 116, 131102 (2016) - Eöt-Wash Group"
+

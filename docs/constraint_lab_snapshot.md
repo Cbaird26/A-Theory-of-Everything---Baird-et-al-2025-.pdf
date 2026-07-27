@@ -33,16 +33,25 @@ This document provides a one-page overview of the constraint evaluation instrume
 
 ## Fifth-Force Instrument Status
 
-**Status:** ✅ Contracted, provenanced, envelope analysis, mapping sensitivity
+**Status:** ✅ Contracted, provenanced, envelope analysis, mapping sensitivity, real-only mode, coverage reporting
 
 - **Data Contract:** Schema validation for constraint curves (lambda_m, alpha_max, source_id)
 - **Provenance:** Full manifest tracking for ingested curves
 - **Envelope Analysis:** Multi-curve tightest-bound computation
+- **Real-Only Mode:** Excludes synthetic/placeholder curves (enabled via `--real-only` flag)
+- **Coverage Reporting:** Shows fraction of sampled points within real curve λ ranges
 - **Mapping Sensitivity:** Robustness checks across order-of-magnitude uncertainty (s_ff ∈ {0.1, 1.0, 10.0})
+- **Mapping Modes:** Explicit modes A/B/C with documented assumptions
 - **Regression Tests:** Locked via `tests/test_fifth_force_*`
 
 **Current Dominance:** 1.2% (envelope mode), < 3% even at ×10 mapping scaling  
 **Boundary Regime:** λ ~ 10⁻³ to 10⁻² m (millimeter to centimeter scales)
+
+**New Features:**
+- Real-only mode prevents overinterpretation outside experimental coverage
+- Coverage reporting shows where real constraints exist
+- Mapping sensitivity modes (A/B/C) with documented assumptions
+- See [`docs/REAL_VS_SYNTHETIC_GUARDRAILS.md`](REAL_VS_SYNTHETIC_GUARDRAILS.md) and [`docs/MAPPING_SENSITIVITY.md`](MAPPING_SENSITIVITY.md)
 
 **Canonical Summary:** [`docs/fifth_force_summary.md`](docs/fifth_force_summary.md)
 
@@ -67,17 +76,25 @@ This document provides a one-page overview of the constraint evaluation instrume
 
 ## Quick Links
 
+### World-Grade Documentation (For Reviewers)
+- [`docs/CLAIMS_LIMITS_AND_FALSIFIERS.md`](CLAIMS_LIMITS_AND_FALSIFIERS.md) - Scientific contract (claims vs. assumptions)
+- [`docs/REVIEWER_QUICKSTART.md`](REVIEWER_QUICKSTART.md) - 10-minute guide to reproduce results
+- [`docs/DATA_GROUND_TRUTH.md`](DATA_GROUND_TRUTH.md) - Canonical datasets and provenance
+- [`docs/REAL_VS_SYNTHETIC_GUARDRAILS.md`](REAL_VS_SYNTHETIC_GUARDRAILS.md) - Real vs. synthetic data guardrails
+- [`docs/MAPPING_SENSITIVITY.md`](MAPPING_SENSITIVITY.md) - Mapping mode documentation
+
 ### QRNG Instrumentation
-- [`docs/qrng_multisource_summary.md`](docs/qrng_multisource_summary.md) - Multi-source calibration results
-- [`docs/qrng_pipeline_validation.md`](docs/qrng_pipeline_validation.md) - Validation certificate
-- [`docs/qrng_multisource_start_here.md`](docs/qrng_multisource_start_here.md) - Quick start guide
-- [`docs/qrng_data_contract.md`](docs/qrng_data_contract.md) - Data contract specification
+- [`docs/qrng_multisource_summary.md`](qrng_multisource_summary.md) - Multi-source calibration results
+- [`docs/qrng_pipeline_validation.md`](qrng_pipeline_validation.md) - Validation certificate
+- [`docs/qrng_multisource_start_here.md`](qrng_multisource_start_here.md) - Quick start guide
+- [`docs/qrng_data_contract.md`](qrng_data_contract.md) - Data contract specification
 
 ### Fifth-Force Instrumentation
-- [`docs/fifth_force_summary.md`](docs/fifth_force_summary.md) - Constraint analysis results
-- [`docs/fifth_force_start_here.md`](docs/fifth_force_start_here.md) - Quick start guide
-- [`docs/fifth_force_data_contract.md`](docs/fifth_force_data_contract.md) - Data contract specification
-- [`docs/dev/fifth_force_mapping_audit.md`](docs/dev/fifth_force_mapping_audit.md) - Mapping physics justification
+- [`docs/fifth_force_summary.md`](fifth_force_summary.md) - Constraint analysis results
+- [`docs/fifth_force_start_here.md`](fifth_force_start_here.md) - Quick start guide
+- [`docs/fifth_force_data_contract.md`](fifth_force_data_contract.md) - Data contract specification
+- [`docs/dev/fifth_force_mapping_audit.md`](dev/fifth_force_mapping_audit.md) - Mapping physics justification
+- [`docs/MAPPING_SENSITIVITY.md`](MAPPING_SENSITIVITY.md) - Mapping modes and sensitivity analysis
 
 ---
 
